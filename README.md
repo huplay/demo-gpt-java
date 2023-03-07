@@ -1,14 +1,16 @@
 # GPT demo # Java
 
-This is demo application which implements the OpenAI's GPT-2 and GPT-3 artificial intelligence language models in Java, for learning purposes.
+This is a demo application which implements the OpenAI's GPT-2 and GPT-3 artificial intelligence language models in Java, for learning purposes.
 
 The goal is to demonstrate the decoder-only transformer architecture (without training), not to create an optimized application. 
 
 TensorFlow or similar tools are NOT used, everything is implemented here.
 
+(GPT-1 isn't implemented because of the different tokenization and normalization order.)
+
 ## Install ##
 
-1. Install Java (version 1.8 or above), optionally Maven and Git
+1. Install Java (version 1.8 or above), optionally Maven and Git.
 
 
 2. Download and unzip or `git clone` this source module: https://github.com/huplay/demo-gpt-java
@@ -16,51 +18,53 @@ TensorFlow or similar tools are NOT used, everything is implemented here.
     ```git clone https://github.com/huplay/demo-gpt-java.git```
 
 
-3. Download the parameter files with the trained parameters for the version you want to use. The default path is the `/parameters` folder, so the simplest way copying these files under that folder, but you can configure it differently.   
-- GPT-2 SMALL: https://github.com/huplay/gpt2-ai.demo-small-params
-- GPT-2 MEDIUM: https://github.com/huplay/gpt2-ai.demo-medium-params
-- GPT-2 LARGE: https://github.com/huplay/gpt2-ai.demo-large-params
-- GPT-2 XL: https://github.com/huplay/gpt2-ai.demo-xl-params1, https://github.com/huplay/gpt2-ai.demo-xl-params2
+3. Download the parameter files with the trained parameters for the version you want to use.
+- GPT-2 SMALL: https://github.com/huplay/GPT2-SMALL
+- GPT-2 MEDIUM: https://github.com/huplay/GPT2-MEDIUM
+- GPT-2 LARGE: https://github.com/huplay/GPT2-LARGE
+- GPT-2 XL: https://github.com/huplay/GPT2-XL, https://github.com/huplay/GPT2-XL-part2
 
-   The original OpenAI GPT-3 parameters are not available, but the EleutherAI trained some GPT-3 models.  
+    The original OpenAI GPT-3 parameters are not available, but the EleutherAI trained some identical models.
 
-4. Using a command line tool (`cmd`) enter into the main directory:
+4. Because of the GitHub repo size limit, the parameters for the larger models stored in multiple repos. Copy these into a single folder. 
+
+
+5. Using a command line tool (`cmd`) enter into the main directory:
    
     ```cd demo-gpt-java```
 
 
-5. Compile (build) the application:
+6. Compile (build) the application:
 
-   ```compile.bat``` (On Windows)
+   ```compile``` (On Windows)
 
    Or alternatively (after Maven install): ```mvn clean install```
 
-## Usage ##
+## Execution ##
 
 Execute the application:
-```run.bat``` (On Windows, small version)
-   
-(Alternatively: ```run-medium.bat```, ```run-large.bat``` or ```run-xl.bat``` for the larger GPT-2 models)
+```run < path-of-the-parameters >``` (On Windows)
     
-Or on any systems:```java -cp target/demo-gpt-java-1.0.jar ai.demo.gpt.Application model=SMALL``` (small version)
+Or on any systems:```java -cp target/demo-gpt-java-1.0.jar ai.demo.gpt.App < path-of-the-parameters >``` 
+  
+Using larger models it is necessary to increase the heap size (memory for Java). The ```run.bat``` handles it automatically, but if the app is called directly you should use the Java -Xmx and Xms flags. 
 
-   
-The app shows a prompt, where you can provide a starting text which will be continued by the app:
+## Additional command line parameters ##
+
+- ``maxlength`` - Maximum number of generated tokens
+- ``topk`` - Number of possibilities to chose from as next token
+
+## Usage ##
+
+The app shows a prompt, where you can provide a text:
 
 ```Input text:```
 
-(If you want to quit, type a single `q` and press Enter.)
+You can leave it empty, or type something, which will be continued by the system. If the maximum length is reached, or the response finished by an end-of-text token, a new prompt will be given.
 
-The prompt will be repeated, but it will start a completely new session every time. (This isn't for chatting.)
+Normally every prompt starts a completely new session (clears the state), but if you want to remain in the same context, start you input text by `//`.
 
-Make sure you have enough memory for the particular model type. (A recommended value is specified in the .bat files using the -Xmx and -Xms flags.)
-
-## Command line parameters ##
-
-- ``model`` - Model size: SMALL (default), MEDIUM, LARGE, XL for the GPT-2, for GPT-3 models see `ModelType.java`
-- ``path`` - Path of the parameter files (default: /parameters) 
-- ``maxlength`` - Maximum number of generated tokens
-- ``topk`` - Number of possibilities to chose from as next token
+To quit press Ctrl + C.
 
 ## Trained parameters ##
 
@@ -118,7 +122,7 @@ Instead of the originally proposed sinusoid position embedding it uses a trained
 GPT-2 has four variants: The smallest has the same size as the GPT-1 (12 decoders, 12 heads), the largest (XL) has 48 decoders and 25 heads.
 
 The only architectural change to the GPT-1 is that the normalization within the decoders are moved before the attention and feed forward layers, and a final normalization is added after the last decoder.
-(So instead of att/add/norm/mlp/add/norm it uses norm/att/add/norm/mlp/add steps.)
+(Instead of att/norm/add/mlp/norm/add it uses norm/att/add/norm/mlp/add steps.)
 
 ### Sparse Transformer ###
 
@@ -143,8 +147,18 @@ Proposal for a more efficient but still good performing sparse solution, where e
 - https://paperswithcode.com/paper/language-models-are-few-shot-learners/review/
 - Source code (not complete): https://github.com/openai/ai.demo.gpt-3
 
-"Same model and architecture as GPT-2, including the modified initialization, pre-normalization, and reversible tokenization described therein, with the exception that we use alternating dense and locally banded sparse attention patterns in the layers of the transformer, similar to the Sparse Transformer.
-To study the dependence of ML performance on model size, we train 8 different sizes of model, from 125 million parameters to 175 billion parameters, with the last being the model we call GPT-3."
+Almost exactly the same architecture as GPT-2, but in different sizes, and some decoders use sparse attention. (The original attention called `global`, the new solution is `local`.) It is a very simple change: only the most recent tokens are used by the attention mechanism (last 128), the older tokens are dropped from the calculation.
+
+### Tokenizer ###
+
+All GPT versions use a byte pair encoding logic, but GPT-1 is different to the others.
+
+GPT-1 had two types of tokens: a normal and a token at the end of the word (marked with `</w>`). Contrary, GPT-2 and GPT-3 have tokens containing an initial space.
+
+GPT-1 used 40,000 merges, and 2 * 238 characters (normal and end-of-word variant), plus an `<unk>` (unknown) token.
+
+GPT-2 and GPT-3 use 50,000 merges and 256 characters, plus an `end-of-text` token.
+
 
 ## Read more ##
 

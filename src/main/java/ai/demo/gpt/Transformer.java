@@ -1,6 +1,9 @@
 package ai.demo.gpt;
 
 import java.util.*;
+import static ai.demo.gpt.App.OUT;
+import static ai.demo.gpt.ParameterReader.*;
+import static ai.demo.gpt.Settings.*;
 import static ai.demo.gpt.Util.IndexedValue;
 
 /**
@@ -8,30 +11,34 @@ import static ai.demo.gpt.Util.IndexedValue;
  */
 public class Transformer
 {
-    private static final int END_OF_TEXT = 50256;
-    private static final float EPSILON = 1e-5f;
-
-    private final Config config;
-    private final TrainedParameters params;
-
+    private final Settings settings;
+    private final Tokenizer tokenizer;
+    private final float[][] tokenEmbeddings;
+    private final float[][] positionEmbeddings;
+    private final float[] normFinalWeights;
+    private final float[] normFinalBiases;
     private final TransformerDecoder[] decoders;
 
     /**
      * Initialization
      */
-    public Transformer(Config config, TrainedParameters params)
+    public Transformer(Settings settings, Tokenizer tokenizer)
     {
-        this.config = config;
-        this.params = params;
+        String path = settings.getPath();
+        int size = settings.getEmbeddingSize();
+
+        this.settings = settings;
+        this.tokenizer = tokenizer;
+        this.tokenEmbeddings = readMatrixFile(path + WTE_DAT, settings.getTokenCount(), size);
+        this.positionEmbeddings = readMatrixFile(path + WPE_DAT, settings.getContextSize(), size);
+        this.normFinalWeights = readVectorFile(path + FINAL_NORM_W_DAT, size);
+        this.normFinalBiases = readVectorFile(path + FINAL_NORM_B_DAT, size);
 
         // Create the decoder stack
-        this.decoders = new TransformerDecoder[config.getModelType().decoderCount];
-        for (int i = 0; i < config.getModelType().decoderCount; i++)
+        this.decoders = new TransformerDecoder[settings.getDecoderCount()];
+        for (int i = 0; i < settings.getDecoderCount(); i++)
         {
-            // At sparse models every second decoder is sparse
-            boolean isSparse = config.getModelType().isSparse && (i % 2 == 0);
-
-            this.decoders[i] = new TransformerDecoder(config, isSparse, params.decoderParameters[i], EPSILON);
+            this.decoders[i] = new TransformerDecoder(i, settings, settings.getAttentionType()[i]);
         }
     }
 
@@ -46,7 +53,7 @@ public class Transformer
         if (intputSize == 0)
         {
             // If the input is empty, use the END_OF_TEXT token as input
-            inputTokens.add(END_OF_TEXT);
+            inputTokens.add(settings.getEndOfTextToken());
             intputSize = 1;
         }
         else
@@ -65,7 +72,7 @@ public class Transformer
         int nextToken = inputTokens.get(intputSize - 1);
 
         // Use the transformer again an again to generate new tokens
-        for (int pos = intputSize - 1; pos < config.getMaxLength() + intputSize; pos++)
+        for (int pos = intputSize - 1; pos < settings.getMaxLength() + intputSize; pos++)
         {
             // Add the last input token or the previously generated new token as input
             float[] output = processToken(pos, nextToken);
@@ -75,7 +82,7 @@ public class Transformer
             result.add(nextToken);
 
             // Exit if the END_OF_TEXT token was chosen or the context size is reached
-            if (nextToken == END_OF_TEXT || (intputSize + result.size() >= config.getModelType().contextSize)) break;
+            if (nextToken == settings.getEndOfTextToken() || (intputSize + result.size() >= settings.getContextSize())) break;
         }
 
         return result;
@@ -84,10 +91,10 @@ public class Transformer
     private float[] processToken(int pos, int token)
     {
         // Word token embedding
-        float[] hiddenState = params.tokenEmbeddings[token];
+        float[] hiddenState = tokenEmbeddings[token];
 
         // Position embedding
-        hiddenState = Util.addVectors(hiddenState, params.positionEmbeddings[pos]);
+        hiddenState = Util.addVectors(hiddenState, positionEmbeddings[pos]);
 
         // Decoder stack
         for (TransformerDecoder decoder : decoders)
@@ -96,10 +103,10 @@ public class Transformer
         }
 
         // Final normalization
-        hiddenState = Util.normalize(hiddenState, EPSILON);
+        hiddenState = Util.normalize(hiddenState, settings.getEpsilon());
         for (int i = 0; i < hiddenState.length; i++)
         {
-            hiddenState[i] = hiddenState[i] * params.normFinalWeights[i] + params.normFinalBiases[i];
+            hiddenState[i] = hiddenState[i] * normFinalWeights[i] + normFinalBiases[i];
         }
 
         return hiddenState;
@@ -109,12 +116,12 @@ public class Transformer
     {
         // Multiply (dot product) the output with all token embeddings.
         // It will give a higher value if the output is more similar to the token embedding
-        float[] logits = Util.multiplyVectorByTransposedMatrix(output, params.tokenEmbeddings);
+        float[] logits = Util.multiplyVectorByTransposedMatrix(output, tokenEmbeddings);
 
         // BTW: It would be possible to implement the temperature and topP filter as well
 
         // Sort (higher to lower) the result of the dot products, retaining the order (index) of the related token
-        List<IndexedValue> orderedLogits = Util.reverseAndFilter(logits, config.getTopK());
+        List<IndexedValue> orderedLogits = Util.reverseAndFilter(logits, settings.getTopK());
 
         // Convert the logits to probabilities
         float[] probabilities = Util.softmax(orderedLogits);
@@ -127,7 +134,7 @@ public class Transformer
 
         // Print the generated token - It isn't perfect, because some words or letters represented by multiple tokens.
         // But it's better to see the progress than waiting till the end.
-        Application.OUT.print(config.getTokenizer().decode(Collections.singletonList(selectedTokenId)));
+        OUT.print(tokenizer.decode(Collections.singletonList(selectedTokenId)));
 
         return selectedTokenId;
     }

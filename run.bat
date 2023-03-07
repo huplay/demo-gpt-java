@@ -1,4 +1,5 @@
 @echo off
 CHCP 65001
-java -Xmx1024m -Xms1024m -cp target/demo-gpt-java-1.0.jar ai.demo.gpt.Application model=SMALL maxLength=25
+if exist %1/setup/setup-java.bat call %1/setup/setup-java.bat
+java %GPT_JAVA_ARGS% -cp target/demo-gpt-java-1.0.jar ai.demo.gpt.App %*
 

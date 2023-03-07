@@ -12,23 +12,24 @@ import java.util.regex.Pattern;
  */
 public class Tokenizer
 {
-    public static final String ENCODER_FILENAME = "encoder.json";
-    public static final String VOCAB_FILENAME = "vocab.bpe";
+    private static final String TOKENS_FILENAME = "tokens.map";
+    private static final String MERGES_FILENAME = "merges.bpe";
 
-    private final Map<Integer, Character> charEncoding = new HashMap<>(256); // byte_encoder
-    private final Map<Character, Byte> charDecoding = new HashMap<>(256); // byte_encoder
+    private final Map<Character, Byte> charEncoding = new HashMap<>(256);
+    private final Map<Integer, Character> charDecoding = new HashMap<>(256);
 
-    private final Map<Integer, String> tokenEncoding = new HashMap<>(50257); // decoder
-    private final Map<String, Integer> tokenDecoding = new HashMap<>(50257); // encoder
+    private final Map<String, Integer> tokenEncoding = new HashMap<>(50257);
+    private final Map<Integer, String> tokenDecoding = new HashMap<>(50257);
 
     private final Map<Pair, Integer> merges = new HashMap<>(50000); // bpe_ranks
 
-    private final Pattern pattern = Pattern.compile("'s|'t|'re|'ve|'m|'ll|'d| ?\\p{L}+| ?\\p{N}+| ?[^\\s\\p{L}\\p{N}]+|\\s+(?!\\S)|\\s+");
+    private final Pattern pattern =
+            Pattern.compile("'s|'t|'re|'ve|'m|'ll|'d| ?\\p{L}+| ?\\p{N}+| ?[^\\s\\p{L}\\p{N}]+|\\s+(?!\\S)|\\s+");
 
     /**
      * Initialization
      */
-    public Tokenizer(String path)
+    public Tokenizer(String parametersPath)
     {
         addCharRange(0, 'Ā', 'Ġ');
         addCharRange(33, '!', '~');
@@ -37,36 +38,34 @@ public class Tokenizer
         addCharRange(173, 'Ń', 'Ń');
         addCharRange(174, '®', 'ÿ');
 
-        readEncoderFile(path);
-        readVocabFile(path);
+        String path = parametersPath + "/tokenizer";
+
+        readTokensFile(path);
+        readMergesFile(path);
     }
 
     private void addCharRange(int pos, char firstChar, char lastChar)
     {
         for (int i = firstChar; i <= lastChar; i++)
         {
-            charEncoding.put(pos, (char) i);
-            charDecoding.put((char) i, (byte)pos);
+            charEncoding.put((char) i, (byte)pos);
+            charDecoding.put(pos, (char) i);
             pos++;
         }
     }
 
     /**
-     * Read the encoder.json file
+     * Read the "tokens.map" file
      */
-    private void readEncoderFile(String path)
+    private void readTokensFile(String path)
     {
-        try
+        String fileName = path + "/" + TOKENS_FILENAME;
+        try (Scanner scanner = new Scanner(new File(fileName)))
         {
-            String fileName = path + "/" + ENCODER_FILENAME;
-            File file = new File(fileName);
-            Scanner scanner = new Scanner(file);
-
             while (scanner.hasNext())
             {
                 String first = scanner.next();
 
-                if (first.startsWith("{")) first = first.substring(1);
                 if (first.startsWith("\"")) first = first.substring(1);
                 if (first.endsWith(":")) first = first.substring(0, first.length() - 1);
                 if (first.endsWith("\"")) first = first.substring(0, first.length() - 1);
@@ -87,12 +86,11 @@ public class Tokenizer
                 String second = scanner.next();
 
                 if (second.endsWith(",")) second = second.substring(0, second.length() - 1);
-                if (second.endsWith("}")) second = second.substring(0, second.length() - 1);
 
                 int value = Integer.parseInt(second);
 
-                tokenEncoding.put(value, first);
-                tokenDecoding.put(first, value);
+                tokenDecoding.put(value, first);
+                tokenEncoding.put(first, value);
             }
         }
         catch (IOException e)
@@ -102,18 +100,16 @@ public class Tokenizer
     }
 
     /**
-     * Read the vocab.bpe file
+     * Read the "merges.bpe" file
      */
-    private void readVocabFile(String path)
+    private void readMergesFile(String path)
     {
         try
         {
-            String fileName = path + "/" + VOCAB_FILENAME;
+            String fileName = path + "/" + MERGES_FILENAME;
             File file = new File(fileName);
             FileInputStream inputStream = new FileInputStream(file);
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-
-            reader.readLine(); // The first line is a comment
 
             int i = 0;
             while (true)
@@ -155,7 +151,7 @@ public class Tokenizer
             {
                 int value = buffer.get();
                 if (value < 0) value = value & 0xff;
-                match.append(charEncoding.get(value));
+                match.append(charDecoding.get(value));
             }
 
             unicodes.add(match.toString());
@@ -165,7 +161,7 @@ public class Tokenizer
         {
             for (String token : bpe(word).split(" "))
             {
-                Integer value = tokenDecoding.get(token);
+                Integer value = tokenEncoding.get(token);
                 if (value != null)
                 {
                     result.add(value);
@@ -184,14 +180,14 @@ public class Tokenizer
         StringBuilder textBuilder = new StringBuilder();
         for (int token : tokens)
         {
-            textBuilder.append(tokenEncoding.get(token));
+            textBuilder.append(tokenDecoding.get(token));
         }
         String text = textBuilder.toString();
 
         byte[] bytes = new byte[text.length()];
         for (int i = 0; i < text.length(); i++)
         {
-            bytes[i] = charDecoding.get(text.charAt(i));
+            bytes[i] = charEncoding.get(text.charAt(i));
         }
 
         return new String(bytes, StandardCharsets.UTF_8);
