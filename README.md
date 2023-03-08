@@ -8,33 +8,55 @@ TensorFlow or similar tools are NOT used, everything is implemented here.
 
 (GPT-1 isn't implemented because of the different tokenization and normalization order.)
 
+## Versions ##
+
+| Company      | Name             | Hidden size | Decoders | Heads | Context size | Parameter size | Notes            | Parameters                                                                        |
+|--------------|------------------|------------:|---------:|------:|-------------:|---------------:|------------------|-----------------------------------------------------------------------------------|
+| OpenAI       | GPT-2 SMALL      |         768 |       12 |    12 |         1024 |          124 M |                  | https://github.com/huplay/GPT2-SMALL                                              | 
+| OpenAI       | GPT-2 MEDIUM     |        1024 |       24 |    16 |         1024 |          355 M |                  | https://github.com/huplay/GPT2-MEDIUM                                             |
+| OpenAI       | GPT-2 LARGE      |        1280 |       36 |    20 |         1024 |          774 M |                  | https://github.com/huplay/GPT2-LARGE                                              |
+| OpenAI       | GPT-2 XL         |        1600 |       48 |    25 |         1024 |        1,558 M | GPT-2            | https://github.com/huplay/GPT2-XL, <br /> https://github.com/huplay/GPT2-XL-part2 |
+|              |                  |             |          |       |              |                |                  |                                                                                   |
+| OpenAI       | GPT-3 SMALL      |         768 |       12 |    12 |         2048 |          124 M |                  |                                                                                   |
+| OpenAI       | GPT-3 MEDIUM     |        1024 |       24 |    16 |         2048 |          355 M |                  |                                                                                   |
+| OpenAI       | GPT-3 LARGE      |        1536 |       24 |    16 |         2048 |          759 M |                  |                                                                                   |
+| OpenAI       | GPT-3 XL         |        2048 |       24 |    24 |         2048 |        1,314 M |                  |                                                                                   |
+| OpenAI       | GPT-3 ADA        |        2560 |       32 |    32 |         2048 |        2,649 M |                  |                                                                                   |
+| OpenAI       | GPT-3 BABBAGE    |        4096 |       32 |    32 |         2048 |        6,654 M |                  |                                                                                   |
+| OpenAI       | GPT-3 CURIE      |        5140 |       40 |    40 |         2048 |       12,948 M |                  |                                                                                   |
+| OpenAI       | GPT-3 DAVINCI    |       12288 |       96 |    96 |         2048 |      174,591 M | GPT-3            |                                                                                   |
+| OpenAI       | GPT-3 DAVINCI v2 |       12288 |       96 |    96 |         4000 |      174,591 M | GPT-3.5          |                                                                                   |
+| OpenAI       | GPT-3 DAVINCI v3 |       12288 |       96 |    96 |         4000 |      174,591 M | ChatGPT          |                                                                                   |
+|              |                  |             |          |       |              |                |                  |
+| EleutherAI   | GPT-NEO-125M     |         768 |       12 |    12 |         2048 |          124 M | ~ GPT-3 SMALL    |                                                                                   |
+| EleutherAI   | GPT-NEO-1.3B     |        2048 |       24 |    16 |         2048 |        1,314 M | ~ GPT-3 XL       |                                                                                   |
+| EleutherAI   | GPT-NEO-2.7B     |        2560 |       32 |    20 |         2048 |        2,649 M | ~ GPT-3 ADA      |                                                                                   |
+| EleutherAI   | GPT-J-6B         |        4096 |       28 |    16 |         2048 |        5,849 M | ~ GPT-3 BABBAGE- |                                                                                   |
+| EleutherAI   | GPT-NEOX-20B     |        6144 |       44 |    64 |         2048 |       20,250 M | ~ GPT-3 CURIE+   |                                                                                   |
+
+
+
 ## Install ##
 
-1. Install Java (version 1.8 or above), optionally Maven and Git.
+1. Install Java (version 1.8 or above).
 
 
-2. Download and unzip or `git clone` this source module: https://github.com/huplay/demo-gpt-java
+2. Download and unzip this module: https://github.com/huplay/demo-gpt-java
 
-    ```git clone https://github.com/huplay/demo-gpt-java.git```
-
-
-3. Download the parameter files with the trained parameters for the version you want to use.
-- GPT-2 SMALL: https://github.com/huplay/GPT2-SMALL
-- GPT-2 MEDIUM: https://github.com/huplay/GPT2-MEDIUM
-- GPT-2 LARGE: https://github.com/huplay/GPT2-LARGE
-- GPT-2 XL: https://github.com/huplay/GPT2-XL, https://github.com/huplay/GPT2-XL-part2
-
-    The original OpenAI GPT-3 parameters are not available, but the EleutherAI trained some identical models.
-
-4. Because of the GitHub repo size limit, the parameters for the larger models stored in multiple repos. Copy these into a single folder. 
+   (Or using git: ```git clone https://github.com/huplay/demo-gpt-java.git```)
 
 
-5. Using a command line tool (`cmd`) enter into the main directory:
+3. Download and unzip the files with the trained parameters for the version you want to use.
+
+    Because of the GitHub repo size limit, the parameters for the larger models stored in multiple repos. Copy these into a single folder.
+
+
+4. Using a command line tool (`cmd`) enter into the main directory:
    
     ```cd demo-gpt-java```
 
 
-6. Compile (build) the application:
+5. Compile (build) the application:
 
    ```compile``` (On Windows)
 
