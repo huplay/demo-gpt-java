@@ -10,29 +10,43 @@ TensorFlow or similar tools are NOT used, everything is implemented here.
 
 ## Versions ##
 
-| Company      | Name               | Hidden size | Decoders | Heads | Context size | Size of params | Notes            | Download                                                                                       |
-|--------------|--------------------|------------:|---------:|------:|-------------:|---------------:|------------------|------------------------------------------------------------------------------------------------|
-| OpenAI       | `GPT-2 SMALL`      |         768 |       12 |    12 |         1024 |          124 M |                  | [Link](https://github.com/huplay/GPT2-SMALL)                                                   | 
-| OpenAI       | `GPT-2 MEDIUM`     |        1024 |       24 |    16 |         1024 |          355 M |                  | [Link](https://github.com/huplay/GPT2-MEDIUM)                                                  |
-| OpenAI       | `GPT-2 LARGE`      |        1280 |       36 |    20 |         1024 |          774 M |                  | [Link](https://github.com/huplay/GPT2-LARGE)                                                   |
-| OpenAI       | `GPT-2 XL`         |        1600 |       48 |    25 |         1024 |        1,558 M | GPT-2            | [Link 1](https://github.com/huplay/GPT2-XL), [Link 2](https://github.com/huplay/GPT2-XL-part2) |
-|              |                    |             |          |       |              |                |                  |                                                                                                |
-| OpenAI       | `GPT-3 SMALL`      |         768 |       12 |    12 |         2048 |          124 M |                  |                                                                                                |
-| OpenAI       | `GPT-3 MEDIUM`     |        1024 |       24 |    16 |         2048 |          355 M |                  |                                                                                                |
-| OpenAI       | `GPT-3 LARGE`      |        1536 |       24 |    16 |         2048 |          759 M |                  |                                                                                                |
-| OpenAI       | `GPT-3 XL`         |        2048 |       24 |    24 |         2048 |        1,314 M |                  |                                                                                                |
-| OpenAI       | `GPT-3 ADA`        |        2560 |       32 |    32 |         2048 |        2,649 M |                  |                                                                                                |
-| OpenAI       | `GPT-3 BABBAGE`    |        4096 |       32 |    32 |         2048 |        6,654 M |                  |                                                                                                |
-| OpenAI       | `GPT-3 CURIE`      |        5140 |       40 |    40 |         2048 |       12,948 M |                  |                                                                                                |
-| OpenAI       | `GPT-3 DAVINCI`    |       12288 |       96 |    96 |         2048 |      174,591 M | GPT-3            |                                                                                                |
-| OpenAI       | `GPT-3 DAVINCI v2` |       12288 |       96 |    96 |         4000 |      174,591 M | GPT-3.5          |                                                                                                |
-| OpenAI       | `GPT-3 DAVINCI v3` |       12288 |       96 |    96 |         4000 |      174,591 M | ChatGPT          |                                                                                                |
-|              |                    |             |          |       |              |                |                  |
-| EleutherAI   | `GPT-NEO-125M`     |         768 |       12 |    12 |         2048 |          124 M | ~ GPT-3 SMALL    |                                                                                                |
-| EleutherAI   | `GPT-NEO-1.3B`     |        2048 |       24 |    16 |         2048 |        1,314 M | ~ GPT-3 XL       |                                                                                                |
-| EleutherAI   | `GPT-NEO-2.7B`     |        2560 |       32 |    20 |         2048 |        2,649 M | ~ GPT-3 ADA      |                                                                                                |
-| EleutherAI   | `GPT-J-6B`         |        4096 |       28 |    16 |         2048 |        5,849 M | ~ GPT-3 BABBAGE- |                                                                                                |
-| EleutherAI   | `GPT-NEOX-20B`     |        6144 |       44 |    64 |         2048 |       20,250 M | ~ GPT-3 CURIE+   |                                                                                                |
+### OpenAI GPT-2 ###
+
+| Name             | Hidden size | Decoders | Heads | Context size | Size of params | Notes            | Download                                                                                       |
+|------------------|------------:|---------:|------:|-------------:|---------------:|------------------|------------------------------------------------------------------------------------------------|
+| GPT-2 SMALL      |         768 |       12 |    12 |         1024 |          124 M |                  | [Link](https://github.com/huplay/GPT2-SMALL)                                                   | 
+| GPT-2 MEDIUM     |        1024 |       24 |    16 |         1024 |          355 M |                  | [Link](https://github.com/huplay/GPT2-MEDIUM)                                                  |
+| GPT-2 LARGE      |        1280 |       36 |    20 |         1024 |          774 M |                  | [Link](https://github.com/huplay/GPT2-LARGE)                                                   |
+| GPT-2 XL         |        1600 |       48 |    25 |         1024 |        1,558 M | GPT-2            | [Link 1](https://github.com/huplay/GPT2-XL), [Link 2](https://github.com/huplay/GPT2-XL-part2) |
+
+### OpenAI GPT-3 ###
+
+(Parameters are not published)
+
+| Name             | Hidden size | Decoders | Heads | Context size | Size of params | Notes            | 
+|------------------|------------:|---------:|------:|-------------:|---------------:|------------------|
+| GPT-3 SMALL      |         768 |       12 |    12 |         2048 |          124 M |                  |
+| GPT-3 MEDIUM     |        1024 |       24 |    16 |         2048 |          355 M |                  |
+| GPT-3 LARGE      |        1536 |       24 |    16 |         2048 |          759 M |                  |
+| GPT-3 XL         |        2048 |       24 |    24 |         2048 |        1,314 M |                  |
+| GPT-3 ADA        |        2560 |       32 |    32 |         2048 |        2,649 M |                  |
+| GPT-3 BABBAGE    |        4096 |       32 |    32 |         2048 |        6,654 M |                  |
+| GPT-3 CURIE      |        5140 |       40 |    40 |         2048 |       12,948 M |                  |
+| GPT-3 DAVINCI    |       12288 |       96 |    96 |         2048 |      174,591 M | GPT-3            |
+| GPT-3 DAVINCI v2 |       12288 |       96 |    96 |         4000 |      174,591 M | GPT-3.5          |
+| GPT-3 DAVINCI v3 |       12288 |       96 |    96 |         4000 |      174,591 M | ChatGPT          |
+
+### EleutherAI GPT NEO/J/NEOX ###
+
+Similar to OpenAI's GPT-3 series, without the largest model
+
+| Name         | Hidden size | Decoders | Heads | Context size | Size of params | Notes            | Download                                                                                       |
+|--------------|------------:|---------:|------:|-------------:|---------------:|------------------|------------------------------------------------------------------------------------------------|
+| GPT-NEO-125M |         768 |       12 |    12 |         2048 |          124 M | ~ GPT-3 SMALL    |                                                                                                |
+| GPT-NEO-1.3B |        2048 |       24 |    16 |         2048 |        1,314 M | ~ GPT-3 XL       |                                                                                                |
+| GPT-NEO-2.7B |        2560 |       32 |    20 |         2048 |        2,649 M | ~ GPT-3 ADA      |                                                                                                |
+| GPT-J-6B     |        4096 |       28 |    16 |         2048 |        5,849 M | ~ GPT-3 BABBAGE- |                                                                                                |
+| GPT-NEOX-20B |        6144 |       44 |    64 |         2048 |       20,250 M | ~ GPT-3 CURIE+   |                                                                                                |
 
 
 
