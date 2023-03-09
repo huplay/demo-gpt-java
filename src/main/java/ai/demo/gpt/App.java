@@ -42,7 +42,7 @@ public class App
                 String input = reader.readLine();
 
                 // If the input starts with "//", the same session will be continued, otherwise the state is cleared
-                if (input.startsWith("//")) input = input.substring(2);
+                if (input != null && input.startsWith("//")) input = input.substring(2);
                 else transformer.clear();
 
                 // Split the input text into tokens

@@ -11,14 +11,14 @@ import java.util.List;
 
 public class ParameterReader
 {
-    public static float[] readVectorFile(String fileName, int size)
+    public static float[] readVectorFile(String path, String fileName, int size)
     {
-        return readParameterFile(fileName, size);
+        return readParameterFile(path + "/" + fileName, size);
     }
 
-    public static float[][] readMatrixFile(String fileName, int rows, int cols)
+    public static float[][] readMatrixFile(String path, String fileName, int rows, int cols)
     {
-        float[] numbers = readParameterFile(fileName, rows * cols);
+        float[] numbers = readParameterFile(path + "/" + fileName, rows * cols);
         return Util.splitVector(numbers, rows);
     }
 

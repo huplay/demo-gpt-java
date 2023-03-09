@@ -137,6 +137,8 @@ public class Tokenizer
      */
     public List<Integer> encode(String text)
     {
+        if (text == null) return Collections.singletonList(0);
+
         List<Integer> result = new ArrayList<>();
 
         Matcher matcher = pattern.matcher(text);

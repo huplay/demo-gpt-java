@@ -25,14 +25,14 @@ public class Transformer
     public Transformer(Settings settings, Tokenizer tokenizer)
     {
         String path = settings.getPath();
-        int size = settings.getEmbeddingSize();
+        int hiddenSize = settings.getHiddenSize();
 
         this.settings = settings;
         this.tokenizer = tokenizer;
-        this.tokenEmbeddings = readMatrixFile(path + WTE_DAT, settings.getTokenCount(), size);
-        this.positionEmbeddings = readMatrixFile(path + WPE_DAT, settings.getContextSize(), size);
-        this.normFinalWeights = readVectorFile(path + FINAL_NORM_W_DAT, size);
-        this.normFinalBiases = readVectorFile(path + FINAL_NORM_B_DAT, size);
+        this.tokenEmbeddings = readMatrixFile(path, WTE_DAT, settings.getTokenCount(), hiddenSize);
+        this.positionEmbeddings = readMatrixFile(path, WPE_DAT, settings.getContextSize(), hiddenSize);
+        this.normFinalWeights = readVectorFile(path, FINAL_NORM_W_DAT, hiddenSize);
+        this.normFinalBiases = readVectorFile(path, FINAL_NORM_B_DAT, hiddenSize);
 
         // Create the decoder stack
         this.decoders = new TransformerDecoder[settings.getDecoderCount()];

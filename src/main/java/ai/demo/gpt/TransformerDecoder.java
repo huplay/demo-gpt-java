@@ -13,13 +13,13 @@ import static java.lang.Math.pow;
 public class TransformerDecoder
 {
     private final Settings settings;
-    private final boolean isAttention;
+    private final boolean hasAttention;
     private final int maxAttentionSize;
-    private final float[][] queryWeighs;
+    private final float[][] queryWeights;
     private final float[] queryBiases;
-    private final float[][] keyWeighs;
+    private final float[][] keyWeights;
     private final float[] keyBiases;
-    private final float[][] valueWeighs;
+    private final float[][] valueWeights;
     private final float[] valueBiases;
     private final float[][] projectionWeights;
     private final float[] projectionBiases;
@@ -39,28 +39,29 @@ public class TransformerDecoder
      */
     public TransformerDecoder(int decoderId, Settings settings, String attentionType)
     {
-        String path = settings.getPath() + "/decoder" + (decoderId + 1) + "/";
-        int size = settings.getEmbeddingSize();
-
         this.settings = settings;
-        this.isAttention = !attentionType.equals(ATTENTION_NONE);
+        this.hasAttention = !attentionType.equals(ATTENTION_NONE);
         this.maxAttentionSize = attentionType.equals(ATTENTION_LOCAL) ? settings.getLocalAttentionSize() : Integer.MAX_VALUE;
-        this.queryWeighs = readMatrixFile(path + ATT_QUERY_W_DAT, size, size);
-        this.queryBiases = readVectorFile(path + ATT_QUERY_B_DAT, size);
-        this.keyWeighs = readMatrixFile(path + ATT_KEY_W_DAT, size, size);
-        this.keyBiases = readVectorFile(path + ATT_KEY_B_DAT, size);
-        this.valueWeighs = readMatrixFile(path + ATT_VALUE_W_DAT, size, size);
-        this.valueBiases = readVectorFile(path + ATT_VALUE_B_DAT, size);
-        this.projectionWeights = readMatrixFile(path + ATT_PROJ_W_DAT, size, size);
-        this.projectionBiases = readVectorFile(path + ATT_PROJ_B_DAT, size);
-        this.attNormWeights = readVectorFile(path + ATT_NORM_W_DAT, size);
-        this.attNormBiases = readVectorFile(path + ATT_NORM_B_DAT, size);
-        this.mlpLayer1Weights = readMatrixFile(path + MLP_LAYER1_W_DAT, size, size * 4);
-        this.mlpLayer1Biases = readVectorFile(path + MLP_LAYER1_B_DAT, size * 4);
-        this.mlpLayer2Weights = readMatrixFile(path + MLP_LAYER2_W_DAT, size * 4, size);
-        this.mlpLayer2Biases = readVectorFile(path + MLP_LAYER2_B_DAT, size);
-        this.mlpNormWeights = readVectorFile(path + MLP_NORM_W_DAT, size);
-        this.mlpNormBiases = readVectorFile(path + MLP_NORM_B_DAT, size);
+
+        String path = settings.getPath() + "/decoder" + (decoderId + 1);
+        int hiddenSize = settings.getHiddenSize();
+
+        this.queryWeights = readMatrixFile(path, ATT_QUERY_W_DAT, hiddenSize, hiddenSize);
+        this.queryBiases = settings.hasAttentionBias() ? readVectorFile(path, ATT_QUERY_B_DAT, hiddenSize) : null;
+        this.keyWeights = readMatrixFile(path, ATT_KEY_W_DAT, hiddenSize, hiddenSize);
+        this.keyBiases = settings.hasAttentionBias() ? readVectorFile(path, ATT_KEY_B_DAT, hiddenSize) : null;
+        this.valueWeights = readMatrixFile(path, ATT_VALUE_W_DAT, hiddenSize, hiddenSize);
+        this.valueBiases = settings.hasAttentionBias() ? readVectorFile(path, ATT_VALUE_B_DAT, hiddenSize) : null;
+        this.projectionWeights = readMatrixFile(path, ATT_PROJ_W_DAT, hiddenSize, hiddenSize);
+        this.projectionBiases = readVectorFile(path, ATT_PROJ_B_DAT, hiddenSize);
+        this.attNormWeights = readVectorFile(path, ATT_NORM_W_DAT, hiddenSize);
+        this.attNormBiases = readVectorFile(path, ATT_NORM_B_DAT, hiddenSize);
+        this.mlpLayer1Weights = readMatrixFile(path, MLP_LAYER1_W_DAT, hiddenSize, hiddenSize * 4);
+        this.mlpLayer1Biases = readVectorFile(path, MLP_LAYER1_B_DAT, hiddenSize * 4);
+        this.mlpLayer2Weights = readMatrixFile(path, MLP_LAYER2_W_DAT, hiddenSize * 4, hiddenSize);
+        this.mlpLayer2Biases = readVectorFile(path, MLP_LAYER2_B_DAT, hiddenSize);
+        this.mlpNormWeights = readVectorFile(path, MLP_NORM_W_DAT, hiddenSize);
+        this.mlpNormBiases = readVectorFile(path, MLP_NORM_B_DAT, hiddenSize);
     }
 
     /**
@@ -69,7 +70,7 @@ public class TransformerDecoder
     public float[] execute(float[] hiddenState)
     {
         // Attention block
-        if (isAttention) hiddenState = attentionBlock(hiddenState);
+        if (hasAttention) hiddenState = attentionBlock(hiddenState);
 
         // Feedforward block
         return mlpBlock(hiddenState);
@@ -102,14 +103,9 @@ public class TransformerDecoder
     private float[] attention(float[] hiddenState)
     {
         // Calculate the query, key and value vectors for the actual token:
-        float[] query = Util.multiplyVectorByMatrix(hiddenState, queryWeighs);
-        query = Util.addVectors(query, queryBiases);
-
-        float[] key = Util.multiplyVectorByMatrix(hiddenState, keyWeighs);
-        key = Util.addVectors(key, keyBiases);
-
-        float[] value = Util.multiplyVectorByMatrix(hiddenState, valueWeighs);
-        value = Util.addVectors(value, valueBiases);
+        float[] query = weight(hiddenState, queryWeights, queryBiases);
+        float[] key = weight(hiddenState, keyWeights, keyBiases);
+        float[] value = weight(hiddenState, valueWeights, valueBiases);
 
         // Split the query, key and value vectors into pieces for all heads
         float[][] queries = Util.splitVector(query, settings.getHeadCount());
@@ -128,7 +124,7 @@ public class TransformerDecoder
             storedValues.remove(0);
         }
 
-        float[][] sums = new float[settings.getHeadCount()][settings.getEmbeddingSize() / settings.getHeadCount()];
+        float[][] sums = new float[settings.getHeadCount()][settings.getHiddenSize() / settings.getHeadCount()];
 
         // Scoring the previous tokens (including the actual), separately for all heads
         // Again: we have to score not only the previous, but the actual token as well
@@ -158,32 +154,29 @@ public class TransformerDecoder
         float[] flatSums = Util.flattenMatrix(sums);
 
         // Apply the attention projection weights and biases
-        hiddenState = Util.multiplyVectorByMatrix(flatSums, projectionWeights);
-        return Util.addVectors(hiddenState, projectionBiases);
+        return weight(flatSums, projectionWeights, projectionBiases);
     }
 
     private float[] mlp(float[] hiddenState)
     {
         // Two layered feedforward neural network:
-        // - Layer 1: <embeddingSize> * 4 neurons (using a gelu activation function)
-        // - Layer 2: <embeddingSize> neurons (without activation function, simply resulting the weighted + biased input)
+        // - Layer 1: <hiddenSize> * 4 neurons (using a gelu activation function)
+        // - Layer 2: <hiddenSize> neurons (without activation function, simply resulting the weighted + biased input)
 
         // The calculation of a neuron layer is simply a multiplication of the input vector by the weight matrix,
         // and a vector to vector addition using the biases, finally executing the activation function
 
         // Layer 1:
-        hiddenState = Util.multiplyVectorByMatrix(hiddenState, mlpLayer1Weights);
-        hiddenState = Util.addVectors(hiddenState, mlpLayer1Biases);
+        hiddenState = weight(hiddenState, mlpLayer1Weights, mlpLayer1Biases);
 
         // Using the gelu activation function, calculating the output of the first layer
-        for (int neuron = 0; neuron < 4 * settings.getEmbeddingSize(); neuron++)
+        for (int neuron = 0; neuron < 4 * settings.getHiddenSize(); neuron++)
         {
             hiddenState[neuron] = gelu(hiddenState[neuron]);
         }
 
         // Layer 2:
-        hiddenState = Util.multiplyVectorByMatrix(hiddenState, mlpLayer2Weights);
-        return Util.addVectors(hiddenState, mlpLayer2Biases);
+        return weight(hiddenState, mlpLayer2Weights, mlpLayer2Biases);
     }
 
     // Gaussian Error Linear Unit (GELU) cumulative distribution activation function (approximate implementation)
@@ -204,6 +197,18 @@ public class TransformerDecoder
         }
 
         return hiddenState;
+    }
+
+    private float[] weight(float[] vector, float[][] weights, float[] biases)
+    {
+        float[] ret = Util.multiplyVectorByMatrix(vector, weights);
+
+        if (biases != null)
+        {
+            ret = Util.addVectors(ret, biases);
+        }
+
+        return ret;
     }
 
     /**

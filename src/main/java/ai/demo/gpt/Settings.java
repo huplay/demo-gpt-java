@@ -8,10 +8,10 @@ import static ai.demo.gpt.App.OUT;
 
 public class Settings
 {
-    public static final String WTE_DAT = "/input/wte";
-    public static final String WPE_DAT = "/input/wpe";
-    public static final String FINAL_NORM_W_DAT = "/output/norm.w";
-    public static final String FINAL_NORM_B_DAT = "/output/norm.b";
+    public static final String WTE_DAT = "input/wte";
+    public static final String WPE_DAT = "input/wpe";
+    public static final String FINAL_NORM_W_DAT = "output/norm.w";
+    public static final String FINAL_NORM_B_DAT = "output/norm.b";
     public static final String ATT_QUERY_W_DAT = "att.query.w";
     public static final String ATT_QUERY_B_DAT = "att.query.b";
     public static final String ATT_KEY_W_DAT = "att.key.w";
@@ -39,12 +39,13 @@ public class Settings
     private final int tokenCount;
     private final int endOfTextToken;
     private final int contextSize;
-    private final int embeddingSize;
+    private final int hiddenSize;
     private final int decoderCount;
     private final int headCount;
     private final int scoreDividend;
     private final String[] attentionType;
     private final int localAttentionSize;
+    private final boolean hasAttentionBias;
     private final float epsilon;
 
     public Settings(String path, int maxLength, int topK) throws Exception
@@ -85,10 +86,11 @@ public class Settings
         tokenCount = toInt(getProperty(properties, "token.count"));
         endOfTextToken = toInt(getProperty(properties, "end.of.text.token"));
         contextSize = toInt(getProperty(properties, "context.size"));
-        embeddingSize = toInt(getProperty(properties, "embedding.size"));
+        hiddenSize = toInt(getProperty(properties, "embedding.size"));
         decoderCount = toInt(getProperty(properties, "decoder.count"));
         headCount = toInt(getProperty(properties, "attention.head.count"));
         scoreDividend = toInt(getProperty(properties, "attention.score.dividend"));
+        hasAttentionBias = toBoolean(getProperty(properties, "has.attention.bias", true), true);
         epsilon = toFloat(getProperty(properties, "epsilon"));
 
         boolean isLocalUsed = false;
@@ -117,9 +119,14 @@ public class Settings
 
     private String getProperty(Map<String, String> properties, String key) throws Exception
     {
+        return getProperty(properties, key, false);
+    }
+
+    private String getProperty(Map<String, String> properties, String key, boolean isOptional) throws Exception
+    {
         String value = properties.get(key);
 
-        if (value == null)
+        if (!isOptional && value == null)
         {
             throw new Exception("Missing entry in the model.properties file: '" + key + "'.");
         }
@@ -129,20 +136,20 @@ public class Settings
 
     public long getParameterSize()
     {
-        long wteSize = (long) tokenCount * embeddingSize;
-        long wpeSize = (long) contextSize * embeddingSize;
-        long finalNormSize = (long) embeddingSize * 2;
+        long wteSize = (long) tokenCount * hiddenSize;
+        long wpeSize = (long) contextSize * hiddenSize;
+        long finalNormSize = (long) hiddenSize * 2;
 
         return wteSize + wpeSize + (getDecoderParameterSize() * decoderCount) + finalNormSize;
     }
 
     private long getDecoderParameterSize()
     {
-        long qkvSize = ((long) embeddingSize * embeddingSize + embeddingSize) * 3;
-        long projSize = (long) embeddingSize * embeddingSize + embeddingSize;
-        long normSize = (long) embeddingSize * 4;
-        long layer1Size = ((long) embeddingSize * embeddingSize + embeddingSize) * 4;
-        long layer2Size = (long) embeddingSize * embeddingSize * 4 + embeddingSize;
+        long qkvSize = ((long) hiddenSize * hiddenSize + hiddenSize) * 3;
+        long projSize = (long) hiddenSize * hiddenSize + hiddenSize;
+        long normSize = (long) hiddenSize * 4;
+        long layer1Size = ((long) hiddenSize * hiddenSize + hiddenSize) * 4;
+        long layer2Size = (long) hiddenSize * hiddenSize * 4 + hiddenSize;
 
         return qkvSize + projSize + normSize + layer1Size + layer2Size;
     }
@@ -168,6 +175,20 @@ public class Settings
         catch (Exception e)
         {
             throw new Exception("The provided properties value can't be converted to float (" + value + ").");
+        }
+    }
+
+    private boolean toBoolean(String value, boolean defaultValue) throws Exception
+    {
+        if (value == null) return defaultValue;
+
+        try
+        {
+            return Boolean.parseBoolean(value);
+        }
+        catch (Exception e)
+        {
+            throw new Exception("The provided properties value can't be converted to boolean (" + value + ").");
         }
     }
 
@@ -201,9 +222,9 @@ public class Settings
         return contextSize;
     }
 
-    public int getEmbeddingSize()
+    public int getHiddenSize()
     {
-        return embeddingSize;
+        return hiddenSize;
     }
 
     public int getDecoderCount()
@@ -229,6 +250,11 @@ public class Settings
     public int getLocalAttentionSize()
     {
         return localAttentionSize;
+    }
+
+    public boolean hasAttentionBias()
+    {
+        return hasAttentionBias;
     }
 
     public float getEpsilon()
