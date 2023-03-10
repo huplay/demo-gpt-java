@@ -8,27 +8,6 @@ import static ai.demo.gpt.App.OUT;
 
 public class Settings
 {
-    public static final String WTE_DAT = "input/wte";
-    public static final String WPE_DAT = "input/wpe";
-    public static final String FINAL_NORM_W_DAT = "output/norm.w";
-    public static final String FINAL_NORM_B_DAT = "output/norm.b";
-    public static final String ATT_QUERY_W_DAT = "att.query.w";
-    public static final String ATT_QUERY_B_DAT = "att.query.b";
-    public static final String ATT_KEY_W_DAT = "att.key.w";
-    public static final String ATT_KEY_B_DAT = "att.key.b";
-    public static final String ATT_VALUE_W_DAT = "att.value.w";
-    public static final String ATT_VALUE_B_DAT = "att.value.b";
-    public static final String ATT_PROJ_W_DAT = "att.proj.w";
-    public static final String ATT_PROJ_B_DAT = "att.proj.b";
-    public static final String ATT_NORM_W_DAT = "att.norm.w";
-    public static final String ATT_NORM_B_DAT = "att.norm.b";
-    public static final String MLP_LAYER1_W_DAT = "mlp.layer1.w";
-    public static final String MLP_LAYER1_B_DAT = "mlp.layer1.b";
-    public static final String MLP_LAYER2_W_DAT = "mlp.layer2.w";
-    public static final String MLP_LAYER2_B_DAT = "mlp.layer2.b";
-    public static final String MLP_NORM_W_DAT = "mlp.norm.w";
-    public static final String MLP_NORM_B_DAT = "mlp.norm.b";
-
     public static final String ATTENTION_GLOBAL = "global";
     public static final String ATTENTION_LOCAL = "local";
     public static final String ATTENTION_NONE = "none";
@@ -44,9 +23,14 @@ public class Settings
     private final int headCount;
     private final int scoreDividend;
     private final String[] attentionType;
-    private final int localAttentionSize;
-    private final boolean hasAttentionBias;
     private final float epsilon;
+    private final int localAttentionSize;
+    private final boolean hasAttentionQueryBias;
+    private final boolean hasAttentionKeyBias;
+    private final boolean hasAttentionValueBias;
+    private final boolean hasAttentionProjectionBias;
+    private final boolean hasMlpLayer1Bias;
+    private final boolean hasMlpLayer2Bias;
 
     public Settings(String path, int maxLength, int topK) throws Exception
     {
@@ -83,15 +67,20 @@ public class Settings
         }
 
         // Find the necessary in the collected properties
-        tokenCount = toInt(getProperty(properties, "token.count"));
-        endOfTextToken = toInt(getProperty(properties, "end.of.text.token"));
-        contextSize = toInt(getProperty(properties, "context.size"));
-        hiddenSize = toInt(getProperty(properties, "embedding.size"));
-        decoderCount = toInt(getProperty(properties, "decoder.count"));
-        headCount = toInt(getProperty(properties, "attention.head.count"));
-        scoreDividend = toInt(getProperty(properties, "attention.score.dividend"));
-        hasAttentionBias = toBoolean(getProperty(properties, "has.attention.bias", true), true);
-        epsilon = toFloat(getProperty(properties, "epsilon"));
+        tokenCount = getIntProperty(properties, "token.count");
+        endOfTextToken = getIntProperty(properties, "end.of.text.token");
+        contextSize = getIntProperty(properties, "context.size");
+        hiddenSize = getIntProperty(properties, "embedding.size");
+        decoderCount = getIntProperty(properties, "decoder.count");
+        headCount = getIntProperty(properties, "attention.head.count");
+        scoreDividend = getIntProperty(properties, "attention.score.dividend");
+        epsilon = getFloatProperty(properties, "epsilon");
+        hasAttentionQueryBias = getBooleanProperty(properties, "has.attention.query.bias", true);
+        hasAttentionKeyBias = getBooleanProperty(properties, "has.attention.key.bias", true);
+        hasAttentionValueBias = getBooleanProperty(properties, "has.attention.value.bias", true);
+        hasAttentionProjectionBias = getBooleanProperty(properties, "has.attention.projection.bias", true);
+        hasMlpLayer1Bias = getBooleanProperty(properties, "has.mlp.layer.1.bias", true);
+        hasMlpLayer2Bias = getBooleanProperty(properties, "has.mlp.layer.2.bias", true);
 
         boolean isLocalUsed = false;
 
@@ -117,23 +106,6 @@ public class Settings
         else localAttentionSize = Integer.MAX_VALUE;
     }
 
-    private String getProperty(Map<String, String> properties, String key) throws Exception
-    {
-        return getProperty(properties, key, false);
-    }
-
-    private String getProperty(Map<String, String> properties, String key, boolean isOptional) throws Exception
-    {
-        String value = properties.get(key);
-
-        if (!isOptional && value == null)
-        {
-            throw new Exception("Missing entry in the model.properties file: '" + key + "'.");
-        }
-
-        return value;
-    }
-
     public long getParameterSize()
     {
         long wteSize = (long) tokenCount * hiddenSize;
@@ -152,6 +124,38 @@ public class Settings
         long layer2Size = (long) hiddenSize * hiddenSize * 4 + hiddenSize;
 
         return qkvSize + projSize + normSize + layer1Size + layer2Size;
+    }
+
+    private int getIntProperty(Map<String, String> properties, String key) throws Exception
+    {
+        return toInt(getProperty(properties, key));
+    }
+
+    private float getFloatProperty(Map<String, String> properties, String key) throws Exception
+    {
+        return toFloat(getProperty(properties, key));
+    }
+
+    private boolean getBooleanProperty(Map<String, String> properties, String key, boolean defaultValue) throws Exception
+    {
+        return toBoolean(getProperty(properties, key, true), defaultValue);
+    }
+
+    private String getProperty(Map<String, String> properties, String key) throws Exception
+    {
+        return getProperty(properties, key, false);
+    }
+
+    private String getProperty(Map<String, String> properties, String key, boolean isOptional) throws Exception
+    {
+        String value = properties.get(key);
+
+        if (!isOptional && value == null)
+        {
+            throw new Exception("Missing entry in the model.properties file: '" + key + "'.");
+        }
+
+        return value;
     }
 
     private int toInt(String value) throws Exception
@@ -242,6 +246,11 @@ public class Settings
         return scoreDividend;
     }
 
+    public float getEpsilon()
+    {
+        return epsilon;
+    }
+
     public String[] getAttentionType()
     {
         return attentionType;
@@ -252,13 +261,33 @@ public class Settings
         return localAttentionSize;
     }
 
-    public boolean hasAttentionBias()
+    public boolean hasAttentionQueryBias()
     {
-        return hasAttentionBias;
+        return hasAttentionQueryBias;
     }
 
-    public float getEpsilon()
+    public boolean hasAttentionKeyBias()
     {
-        return epsilon;
+        return hasAttentionKeyBias;
+    }
+
+    public boolean hasAttentionValueBias()
+    {
+        return hasAttentionValueBias;
+    }
+
+    public boolean hasAttentionProjectionBias()
+    {
+        return hasAttentionProjectionBias;
+    }
+
+    public boolean hasMlpLayer1Bias()
+    {
+        return hasMlpLayer1Bias;
+    }
+
+    public boolean hasMlpLayer2Bias()
+    {
+        return hasMlpLayer2Bias;
     }
 }

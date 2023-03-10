@@ -46,22 +46,22 @@ public class TransformerDecoder
         String path = settings.getPath() + "/decoder" + (decoderId + 1);
         int hiddenSize = settings.getHiddenSize();
 
-        this.queryWeights = readMatrixFile(path, ATT_QUERY_W_DAT, hiddenSize, hiddenSize);
-        this.queryBiases = settings.hasAttentionBias() ? readVectorFile(path, ATT_QUERY_B_DAT, hiddenSize) : null;
-        this.keyWeights = readMatrixFile(path, ATT_KEY_W_DAT, hiddenSize, hiddenSize);
-        this.keyBiases = settings.hasAttentionBias() ? readVectorFile(path, ATT_KEY_B_DAT, hiddenSize) : null;
-        this.valueWeights = readMatrixFile(path, ATT_VALUE_W_DAT, hiddenSize, hiddenSize);
-        this.valueBiases = settings.hasAttentionBias() ? readVectorFile(path, ATT_VALUE_B_DAT, hiddenSize) : null;
-        this.projectionWeights = readMatrixFile(path, ATT_PROJ_W_DAT, hiddenSize, hiddenSize);
-        this.projectionBiases = readVectorFile(path, ATT_PROJ_B_DAT, hiddenSize);
-        this.attNormWeights = readVectorFile(path, ATT_NORM_W_DAT, hiddenSize);
-        this.attNormBiases = readVectorFile(path, ATT_NORM_B_DAT, hiddenSize);
-        this.mlpLayer1Weights = readMatrixFile(path, MLP_LAYER1_W_DAT, hiddenSize, hiddenSize * 4);
-        this.mlpLayer1Biases = readVectorFile(path, MLP_LAYER1_B_DAT, hiddenSize * 4);
-        this.mlpLayer2Weights = readMatrixFile(path, MLP_LAYER2_W_DAT, hiddenSize * 4, hiddenSize);
-        this.mlpLayer2Biases = readVectorFile(path, MLP_LAYER2_B_DAT, hiddenSize);
-        this.mlpNormWeights = readVectorFile(path, MLP_NORM_W_DAT, hiddenSize);
-        this.mlpNormBiases = readVectorFile(path, MLP_NORM_B_DAT, hiddenSize);
+        this.queryWeights = readMatrixFile(path, "att.query.w", hiddenSize, hiddenSize);
+        this.queryBiases = readVectorFile(path, "att.query.b", hiddenSize, settings.hasAttentionQueryBias());
+        this.keyWeights = readMatrixFile(path, "att.key.w", hiddenSize, hiddenSize);
+        this.keyBiases = readVectorFile(path, "att.key.b", hiddenSize, settings.hasAttentionKeyBias());
+        this.valueWeights = readMatrixFile(path, "att.value.w", hiddenSize, hiddenSize);
+        this.valueBiases = readVectorFile(path, "att.value.b", hiddenSize, settings.hasAttentionValueBias());
+        this.projectionWeights = readMatrixFile(path, "att.proj.w", hiddenSize, hiddenSize);
+        this.projectionBiases = readVectorFile(path, "att.proj.b", hiddenSize, settings.hasAttentionProjectionBias());
+        this.attNormWeights = readVectorFile(path, "att.norm.w", hiddenSize);
+        this.attNormBiases = readVectorFile(path, "att.norm.b", hiddenSize);
+        this.mlpLayer1Weights = readMatrixFile(path, "mlp.layer1.w", hiddenSize, hiddenSize * 4);
+        this.mlpLayer1Biases = readVectorFile(path, "mlp.layer1.b", hiddenSize * 4, settings.hasMlpLayer1Bias());
+        this.mlpLayer2Weights = readMatrixFile(path, "mlp.layer2.w", hiddenSize * 4, hiddenSize);
+        this.mlpLayer2Biases = readVectorFile(path, "mlp.layer2.b", hiddenSize, settings.hasMlpLayer2Bias());
+        this.mlpNormWeights = readVectorFile(path, "mlp.norm.w", hiddenSize);
+        this.mlpNormBiases = readVectorFile(path, "mlp.norm.b", hiddenSize);
     }
 
     /**
@@ -182,7 +182,7 @@ public class TransformerDecoder
     // Gaussian Error Linear Unit (GELU) cumulative distribution activation function (approximate implementation)
     private static float gelu(float value)
     {
-        return (float) (0.5 * value * (1 + tanh(sqrt(2 / PI) * (value + 0.044715 * pow(value, 3)))));
+        return (float) (0.5 * value * (1 + tanh(sqrt(2 / PI) * (value + 0.044715 * value * value * value))));
     }
 
     private float[] normalization(float[] hiddenState, float[] weights, float[] biases)

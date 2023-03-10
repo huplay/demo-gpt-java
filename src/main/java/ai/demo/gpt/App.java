@@ -1,6 +1,7 @@
 package ai.demo.gpt;
 
 import java.io.*;
+import java.util.Collections;
 import java.util.List;
 
 public class App
@@ -32,16 +33,16 @@ public class App
             OUT.print("\nLoading trained parameters... ");
             Tokenizer tokenizer = new Tokenizer(arguments.getPath());
             Transformer transformer = new Transformer(settings, tokenizer);
-            OUT.println("Done.");
+            OUT.print("Done.");
 
             while (true)
             {
-                // Read input text
-                OUT.print("\nInput text: ");
+                // Read the input text
+                OUT.print("\n\nInput text: ");
                 BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
                 String input = reader.readLine();
 
-                // If the input starts with "//", the same session will be continued, otherwise the state is cleared
+                // If the input starts with "//", the same session will be continued, otherwise delete the stored state
                 if (input != null && input.startsWith("//")) input = input.substring(2);
                 else transformer.clear();
 
@@ -53,12 +54,30 @@ public class App
 
                 // Convert the output to text and print it
                 String response = tokenizer.decode(outputTokens);
-                OUT.println(/*response*/); // Commented out because we printed already the text (token by token)
+                print(response, outputTokens, tokenizer);
             }
         }
         catch (Exception e)
         {
             OUT.println("\nERROR: " + e.getMessage());
+        }
+    }
+
+    private static void print(String response, List<Integer> outputTokens, Tokenizer tokenizer)
+    {
+        // The response was printed token by token, but for multi-token characters only "�" will be displayed
+
+        // Here we recreate the token by token decoded response (which wasn't returned)
+        StringBuilder tokenByTokenResponse = new StringBuilder();
+        for (int token: outputTokens)
+        {
+            tokenByTokenResponse.append(tokenizer.decode(Collections.singletonList(token)));
+        }
+
+        // If the token by token decoded result is different to the final decoded result, print the corrected version
+        if ( ! tokenByTokenResponse.toString().equals(response))
+        {
+            OUT.print("\nCorrected unicode response:\n" + response);
         }
     }
 

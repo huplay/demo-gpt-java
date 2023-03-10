@@ -16,6 +16,11 @@ public class ParameterReader
         return readParameterFile(path + "/" + fileName, size);
     }
 
+    public static float[] readVectorFile(String path, String fileName, int size, boolean isPresent)
+    {
+        return isPresent ? readVectorFile(path, fileName, size) : null;
+    }
+
     public static float[][] readMatrixFile(String path, String fileName, int rows, int cols)
     {
         float[] numbers = readParameterFile(path + "/" + fileName, rows * cols);

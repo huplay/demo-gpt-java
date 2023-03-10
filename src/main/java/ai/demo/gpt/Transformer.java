@@ -29,10 +29,10 @@ public class Transformer
 
         this.settings = settings;
         this.tokenizer = tokenizer;
-        this.tokenEmbeddings = readMatrixFile(path, WTE_DAT, settings.getTokenCount(), hiddenSize);
-        this.positionEmbeddings = readMatrixFile(path, WPE_DAT, settings.getContextSize(), hiddenSize);
-        this.normFinalWeights = readVectorFile(path, FINAL_NORM_W_DAT, hiddenSize);
-        this.normFinalBiases = readVectorFile(path, FINAL_NORM_B_DAT, hiddenSize);
+        this.tokenEmbeddings = readMatrixFile(path, "input/wte", settings.getTokenCount(), hiddenSize);
+        this.positionEmbeddings = readMatrixFile(path, "input/wpe", settings.getContextSize(), hiddenSize);
+        this.normFinalWeights = readVectorFile(path, "output/norm.w", hiddenSize);
+        this.normFinalBiases = readVectorFile(path, "output/norm.b", hiddenSize);
 
         // Create the decoder stack
         this.decoders = new TransformerDecoder[settings.getDecoderCount()];
@@ -62,6 +62,7 @@ public class Transformer
             // We are not interested in the output of the transformer, but the inner state will be stored
             for (int pos = 0; pos < intputSize - 1; pos++)
             {
+                OUT.print("."); // Printing a dot to show there is a progress
                 processToken(pos, inputTokens.get(pos));
             }
         }
@@ -126,14 +127,13 @@ public class Transformer
         // Convert the logits to probabilities
         float[] probabilities = Util.softmax(orderedLogits);
 
-        // Pick one token randomly, using a weighted random selection.
+        // Pick one token randomly, using a weighted random selection
         int index = Util.weightedRandomPick(probabilities);
 
         // Lookup the token id
         int selectedTokenId = orderedLogits.get(index).index;
 
-        // Print the generated token - It isn't perfect, because some words or letters represented by multiple tokens.
-        // But it's better to see the progress than waiting till the end.
+        // Print the generated token - It isn't perfect, because some words or letters represented by multiple tokens
         OUT.print(tokenizer.decode(Collections.singletonList(selectedTokenId)));
 
         return selectedTokenId;
