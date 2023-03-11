@@ -4,8 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import static ai.demo.gpt.ParameterReader.*;
 import static ai.demo.gpt.Settings.*;
-import static java.lang.Math.*;
-import static java.lang.Math.pow;
+import static ai.demo.gpt.TransformerUtil.*;
 
 /**
  * Decoder implementation for a decoder-only transformer
@@ -72,14 +71,14 @@ public class TransformerDecoder
         // Attention block
         if (hasAttention) hiddenState = attentionBlock(hiddenState);
 
-        // Feedforward block
-        return mlpBlock(hiddenState);
+        // Neuron layers
+        return neuronBlock(hiddenState);
     }
 
     private float[] attentionBlock(float[] inputHiddenState)
     {
         // Normalization
-        float[] hiddenState = normalization(inputHiddenState, attNormWeights, attNormBiases);
+        float[] hiddenState = normalization(inputHiddenState, attNormWeights, attNormBiases, settings.getEpsilon());
 
         // Attention layer
         hiddenState = attention(hiddenState);
@@ -88,13 +87,13 @@ public class TransformerDecoder
         return Util.addVectors(hiddenState, inputHiddenState);
     }
 
-    private float[] mlpBlock(float[] inputHiddenState)
+    private float[] neuronBlock(float[] inputHiddenState)
     {
         // Normalization
-        float[] hiddenState = normalization(inputHiddenState, mlpNormWeights, mlpNormBiases);
+        float[] hiddenState = normalization(inputHiddenState, mlpNormWeights, mlpNormBiases, settings.getEpsilon());
 
-        // Feedforward layers
-        hiddenState = mlp(hiddenState);
+        // Neuron layers
+        hiddenState = neuronLayers(hiddenState);
 
         // Add the original input state to the actual (residual connection)
         return Util.addVectors(hiddenState, inputHiddenState);
@@ -103,9 +102,9 @@ public class TransformerDecoder
     private float[] attention(float[] hiddenState)
     {
         // Calculate the query, key and value vectors for the actual token:
-        float[] query = weight(hiddenState, queryWeights, queryBiases);
-        float[] key = weight(hiddenState, keyWeights, keyBiases);
-        float[] value = weight(hiddenState, valueWeights, valueBiases);
+        float[] query = applyWeight(hiddenState, queryWeights, queryBiases);
+        float[] key = applyWeight(hiddenState, keyWeights, keyBiases);
+        float[] value = applyWeight(hiddenState, valueWeights, valueBiases);
 
         // Split the query, key and value vectors into pieces for all heads
         float[][] queries = Util.splitVector(query, settings.getHeadCount());
@@ -154,61 +153,20 @@ public class TransformerDecoder
         float[] flatSums = Util.flattenMatrix(sums);
 
         // Apply the attention projection weights and biases
-        return weight(flatSums, projectionWeights, projectionBiases);
+        return applyWeight(flatSums, projectionWeights, projectionBiases);
     }
 
-    private float[] mlp(float[] hiddenState)
+    private float[] neuronLayers(float[] hiddenState)
     {
-        // Two layered feedforward neural network:
-        // - Layer 1: <hiddenSize> * 4 neurons (using a gelu activation function)
-        // - Layer 2: <hiddenSize> neurons (without activation function, simply resulting the weighted + biased input)
-
-        // The calculation of a neuron layer is simply a multiplication of the input vector by the weight matrix,
-        // and a vector to vector addition using the biases, finally executing the activation function
-
-        // Layer 1:
-        hiddenState = weight(hiddenState, mlpLayer1Weights, mlpLayer1Biases);
-
-        // Using the gelu activation function, calculating the output of the first layer
-        for (int neuron = 0; neuron < 4 * settings.getHiddenSize(); neuron++)
+        // Layer 1: <hiddenSize> * 4 neurons (using a gelu activation function)
+        hiddenState = applyWeight(hiddenState, mlpLayer1Weights, mlpLayer1Biases);
+        for (int neuron = 0; neuron < settings.getHiddenSize() * 4; neuron++)
         {
             hiddenState[neuron] = gelu(hiddenState[neuron]);
         }
 
-        // Layer 2:
-        return weight(hiddenState, mlpLayer2Weights, mlpLayer2Biases);
-    }
-
-    // Gaussian Error Linear Unit (GELU) cumulative distribution activation function (approximate implementation)
-    private static float gelu(float value)
-    {
-        return (float) (0.5 * value * (1 + tanh(sqrt(2 / PI) * (value + 0.044715 * value * value * value))));
-    }
-
-    private float[] normalization(float[] hiddenState, float[] weights, float[] biases)
-    {
-        // Standard normalization
-        hiddenState = Util.normalize(hiddenState, settings.getEpsilon());
-
-        // Applying the trained weights and biases
-        for (int i = 0; i < hiddenState.length; i++)
-        {
-            hiddenState[i] = hiddenState[i] * weights[i] + biases[i];
-        }
-
-        return hiddenState;
-    }
-
-    private float[] weight(float[] vector, float[][] weights, float[] biases)
-    {
-        float[] ret = Util.multiplyVectorByMatrix(vector, weights);
-
-        if (biases != null)
-        {
-            ret = Util.addVectors(ret, biases);
-        }
-
-        return ret;
+        // Layer 2: <hiddenSize> neurons (without activation function)
+        return applyWeight(hiddenState, mlpLayer2Weights, mlpLayer2Biases);
     }
 
     /**

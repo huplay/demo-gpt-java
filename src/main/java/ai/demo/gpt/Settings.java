@@ -70,7 +70,7 @@ public class Settings
         tokenCount = getIntProperty(properties, "token.count");
         endOfTextToken = getIntProperty(properties, "end.of.text.token");
         contextSize = getIntProperty(properties, "context.size");
-        hiddenSize = getIntProperty(properties, "embedding.size");
+        hiddenSize = getIntProperty(properties, "hidden.size");
         decoderCount = getIntProperty(properties, "decoder.count");
         headCount = getIntProperty(properties, "attention.head.count");
         scoreDividend = getIntProperty(properties, "attention.score.dividend");

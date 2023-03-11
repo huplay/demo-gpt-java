@@ -293,8 +293,8 @@ public class Util
      */
     public static class IndexedValue
     {
-        public float value;
-        public int index;
+        public final float value;
+        public final int index;
 
         public IndexedValue(float value, int index)
         {

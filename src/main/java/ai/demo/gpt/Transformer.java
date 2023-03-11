@@ -3,7 +3,7 @@ package ai.demo.gpt;
 import java.util.*;
 import static ai.demo.gpt.App.OUT;
 import static ai.demo.gpt.ParameterReader.*;
-import static ai.demo.gpt.Settings.*;
+import static ai.demo.gpt.TransformerUtil.normalization;
 import static ai.demo.gpt.Util.IndexedValue;
 
 /**
@@ -104,13 +104,7 @@ public class Transformer
         }
 
         // Final normalization
-        hiddenState = Util.normalize(hiddenState, settings.getEpsilon());
-        for (int i = 0; i < hiddenState.length; i++)
-        {
-            hiddenState[i] = hiddenState[i] * normFinalWeights[i] + normFinalBiases[i];
-        }
-
-        return hiddenState;
+        return normalization(hiddenState, normFinalWeights, normFinalBiases, settings.getEpsilon());
     }
 
     private int selectNextToken(float[] output)

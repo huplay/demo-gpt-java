@@ -109,14 +109,40 @@ To quit press Ctrl + C.
 
 ## Trained parameters ##
 
-The trained data collected using the original GPT-2 application, converted into Java binary format.
+The trained parameters are stored in separate repositories, collected from the published dataset. These can be found in different formats, sometimes a serialized object from TensorFlow, sometimes a Pytorch binary, I had to convert these from Python to Java binary format.
 
-Source: https://github.com/openai/ai.demo.gpt-2
+The file format is the simplest you can imagine: the `.dat` files contain the series of big endian float values (4 bytes each).
 
-The file format is the simplest, the `.dat` files contain the series of big endian float values (4 bytes each).
+Some files (`wte.dat`) were too big to upload to GitHub, so these are split into multiple files (.part1, .part2, ...), merged automatically when the parameters are read.
 
-The `wte` files were too big to upload to GitHub, so these are split into multiple files (.part1, .part2, ...), merged automatically when the parameters are read.
+The files are placed into folders:
+ - `input`: Parameter files used at the input side of the Transformer (token and position embedding)
+ - `decoder1..n`: Parameter files for the actual decoder
+ - `output`: Parameters used at the output side of the Transformer (final normalization)
+ - `tokenizer`: Files used by the tokenizer
+ - `setup`: It contains command files to set the necessary memory size for the actual model
 
+Every dataset should contain a model.properties file, with the following entries:
+ - `token.count`: number of tokens
+ - `end.of.text.token`: token id for marking the END-OF-TEXT
+ - `context.size`: number of tokens the system can process (limited by the position embedding)
+ - `hidden.size`: the size of the hidden state
+ - `decoder.count`: number of decoders
+ - `attention.head.count`: number of attention heads
+ - `attention.score.dividend`: dividend at attention scoring (usually the square root of embeddingSize / headCount)
+ - `attention.type.n`: attention type for all decoders (global | local | none)
+ - `epsilon`: epsilon, used at normalization (mostly 1e-5f)
+
+Optional properties:
+ - `name`: name of the model
+ - `source`: original creator of the model
+ - `attention.local.size`: local attention size (necessary only if local attention type is used)
+ - `hasAttentionQueryBias`: is there a bias for the attention query (default: true)
+ - `hasAttentionKeyBias`: is there a bias for the attention key (default: true)
+ - `hasAttentionValueBias`: is there a bias for the attention value (default: true)
+ - `hasAttentionProjectionBias`: is there a bias for the attention projection (default: true)
+ - `hasMlpLayer1Bias`: is there a bias for the mlp layer1 (default: true)
+ - `hasMlpLayer2Bias`: is there a bias for the mlp layer2 (default: true)
 
 ## History ##
 
