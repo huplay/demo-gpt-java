@@ -139,7 +139,7 @@ public class TransformerDecoder
             }
 
             // Softmax
-            scores = Util.softmax(scores);
+            scores = softmax(scores);
 
             // Multiply the value matrices with the scores, and sum up
             for (int pos = 0; pos < storedKeys.size(); pos++)

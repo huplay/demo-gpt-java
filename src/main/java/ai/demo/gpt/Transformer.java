@@ -3,8 +3,7 @@ package ai.demo.gpt;
 import java.util.*;
 import static ai.demo.gpt.App.OUT;
 import static ai.demo.gpt.ParameterReader.*;
-import static ai.demo.gpt.TransformerUtil.normalization;
-import static ai.demo.gpt.Util.IndexedValue;
+import static ai.demo.gpt.TransformerUtil.*;
 
 /**
  * Decoder-only Transformer implementation
@@ -116,13 +115,13 @@ public class Transformer
         // BTW: It would be possible to implement the temperature and topP filter as well
 
         // Sort (higher to lower) the result of the dot products, retaining the order (index) of the related token
-        List<IndexedValue> orderedLogits = Util.reverseAndFilter(logits, settings.getTopK());
+        List<IndexedValue> orderedLogits = reverseAndFilter(logits, settings.getTopK());
 
         // Convert the logits to probabilities
-        float[] probabilities = Util.softmax(orderedLogits);
+        float[] probabilities = softmax(orderedLogits);
 
         // Pick one token randomly, using a weighted random selection
-        int index = Util.weightedRandomPick(probabilities);
+        int index = weightedRandomPick(probabilities);
 
         // Lookup the token id
         int selectedTokenId = orderedLogits.get(index).index;
