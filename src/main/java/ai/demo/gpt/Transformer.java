@@ -112,8 +112,6 @@ public class Transformer
         // It will give a higher value if the output is more similar to the token embedding
         float[] logits = Util.multiplyVectorByTransposedMatrix(output, tokenEmbeddings);
 
-        // BTW: It would be possible to implement the temperature and topP filter as well
-
         // Sort (higher to lower) the result of the dot products, retaining the order (index) of the related token
         List<IndexedValue> orderedLogits = reverseAndFilter(logits, settings.getTopK());
 

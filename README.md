@@ -44,14 +44,14 @@ The GPT-3 algorithm is known (almost identical to GPT-2), this application has i
 
 They are published the following models so far: 
 
-| Name           | Hidden size | Dec. no. | Head no. |  Length | Size of params | Notes        |                                                  |
-|----------------|------------:|---------:|---------:|--------:|---------------:|--------------|--------------------------------------------------|
-| GPT-NEO-SMALL  |         768 |       12 |       12 |    2048 |          124 M | GPT-NEO-125M | [Link](https://github.com/huplay/GPT-NEO-SMALL)  |
-| GPT-NEO-MEDIUM |        1024 |       24 |       16 |    2048 |          355 M | GPT-NEO-350M | [Link](https://github.com/huplay/GPT-NEO-MEDIUM) |
-| GPT-NEO-XL     |        2048 |       24 |       16 |    2048 |        1,314 M | GPT-NEO-1.3B | [Link](https://github.com/huplay/GPT-NEO-XL)     |
-| GPT-NEO-ADA    |        2560 |       32 |       20 |    2048 |        2,649 M | GPT-NEO-2.7B | [Link](https://github.com/huplay/GPT-NEO-ADA)    |
-| GPT-J-6B       |        4096 |       28 |       16 |    2048 |        5,849 M |              |                                                  |
-| GPT-NEOX-20B   |        6144 |       44 |       64 |    2048 |       20,250 M |              |                                                  |
+| Name           | Hidden size | Dec. no. | Head no. |  Length | Size of params | Notes        |                                                                                                            |
+|----------------|------------:|---------:|---------:|--------:|---------------:|--------------|------------------------------------------------------------------------------------------------------------|
+| GPT-NEO-SMALL  |         768 |       12 |       12 |    2048 |          124 M | GPT-NEO-125M | [Link](https://github.com/huplay/GPT-NEO-SMALL)                                                            |
+| GPT-NEO-MEDIUM |        1024 |       24 |       16 |    2048 |          355 M | GPT-NEO-350M | [Link](https://github.com/huplay/GPT-NEO-MEDIUM)                                                           |
+| GPT-NEO-XL     |        2048 |       24 |       16 |    2048 |        1,314 M | GPT-NEO-1.3B | [Link](https://github.com/huplay/GPT-NEO-XL)                                                               |
+| GPT-NEO-ADA    |        2560 |       32 |       20 |    2048 |        2,649 M | GPT-NEO-2.7B | [Link1](https://github.com/huplay/GPT-NEO-ADA) <br /> [Link2](https://github.com/huplay/GPT-NEO-ADA-part2) |
+| GPT-J-6B       |        4096 |       28 |       16 |    2048 |        5,849 M |              |                                                                                                            |
+| GPT-NEOX-20B   |        6144 |       44 |       64 |    2048 |       20,250 M |              |                                                                                                            |
 
 
 ## Install ##
