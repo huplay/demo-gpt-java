@@ -48,10 +48,10 @@ They are published the following models so far:
 |----------------------------|------------:|---------:|---------:|------------:|---------------:|--------------------------|------------------------------------------------------------------------------------------------------------|
 | GPT&#8209;NEO&#8209;SMALL  |         768 |       12 |       12 |        2048 |          124 M | GPT&#8209;NEO&#8209;125M | [Link](https://github.com/huplay/GPT-NEO-SMALL)                                                            |
 | GPT&#8209;NEO&#8209;MEDIUM |        1024 |       24 |       16 |        2048 |          355 M | GPT&#8209;NEO&#8209;350M | [Link](https://github.com/huplay/GPT-NEO-MEDIUM)                                                           |
-| GPT&#8209; NEO&#8209;XL    |        2048 |       24 |       16 |        2048 |        1,314 M | GPT&#8209;NEO&#8209;1.3B | [Link](https://github.com/huplay/GPT-NEO-XL)                                                               |
-| GPT&#8209; NEO&#8209;ADA   |        2560 |       32 |       20 |        2048 |        2,649 M | GPT&#8209;NEO&#8209;2.7B | [Link1](https://github.com/huplay/GPT-NEO-ADA) <br /> [Link2](https://github.com/huplay/GPT-NEO-ADA-part2) |
-| GPT&#8209; J&#8209;6B      |        4096 |       28 |       16 |        2048 |        5,849 M |                          |                                                                                                            |
-| GPT&#8209; NEOX&#8209;20B  |        6144 |       44 |       64 |        2048 |       20,250 M |                          |                                                                                                            |
+| GPT&#8209;NEO&#8209;XL     |        2048 |       24 |       16 |        2048 |        1,314 M | GPT&#8209;NEO&#8209;1.3B | [Link](https://github.com/huplay/GPT-NEO-XL)                                                               |
+| GPT&#8209;NEO&#8209;ADA    |        2560 |       32 |       20 |        2048 |        2,649 M | GPT&#8209;NEO&#8209;2.7B | [Link1](https://github.com/huplay/GPT-NEO-ADA) <br /> [Link2](https://github.com/huplay/GPT-NEO-ADA-part2) |
+| GPT&#8209;J&#8209;6B       |        4096 |       28 |       16 |        2048 |        5,849 M |                          |                                                                                                            |
+| GPT&#8209;NEOX&#8209;20B   |        6144 |       44 |       64 |        2048 |       20,250 M |                          |                                                                                                            |
 
 
 ## Install ##
