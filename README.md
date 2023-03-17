@@ -86,7 +86,7 @@ Vocabulary size is 32,000.
 
 ### OpenAI GPT-4 ###
 
-GPT-4 was release in 14 March 2023, but almost all technical details are kept secret. It is known this is a Transformer architecture, and as input it can accept images as well. (The output is purely text.)
+GPT-4 was released in 14 March 2023, but almost all technical details are kept secret. It is known this is a Transformer architecture, and as input it can accept images as well. (The output is purely text.)
 
 | Name      | Hidden size | Dec. no. | Head no. | Max. length | Size of params |
 |-----------|------------:|---------:|---------:|------------:|---------------:|
