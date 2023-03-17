@@ -54,6 +54,46 @@ They are published the following models so far:
 | GPT-NEOX-20B                       |        6144 |       44 |       64 |        2048 |       20,250 M |                                                                                                             |
 
 
+### BLOOM (Hugging Face) ###
+
+BLOOM (BigScience Large Open-science Open-access Multilingual Language Model) was created by over a thousand AI developers, organized by Hugging Face, published in May 2022.
+
+It has a larger vocabulary (250,880 tokens) compared to the GPT-2/3 models (50,257), so the size of the word token embedding parameters is bigger. (More parameters as a GPT-2 model with the same architectural size.)
+
+| Name       | Hidden size | Dec. no. | Head no. | Max. length | Size of params |
+|------------|------------:|---------:|---------:|------------:|---------------:|
+| BLOOM-560M |        1024 |       24 |       16 |        2048 |          561 M | 
+| BLOOM-1b1  |        1536 |       24 |       16 |        2048 |        1,068 M |
+| BLOOM-1b7  |        2048 |       24 |       16 |        2048 |        1,726 M |
+| BLOOM-3B   |        2560 |       30 |       32 |        2048 |        3,007 M |
+| BLOOM-7b1  |        4096 |       30 |       32 |        2048 |        7,077 M |
+| BLOOM      |       14336 |       70 |      112 |        2048 |      176,276 M |
+
+
+### LLaMA (Meta AI) ###
+
+LLaMA (Large Language Model Meta AI) is a large language model announced by Meta (Facebook) in 23 Feb 2023. The trained parameters were shared only to academic researchers, but on 2 March it was leaked to the public.
+
+Vocabulary size is 32,000.
+
+| Name      | Hidden size | Dec. no. | Head no. | Max. length | Size of params |
+|-----------|------------:|---------:|---------:|------------:|---------------:|
+| LLaMA-7B  |        4096 |       32 |       32 |        2048 |        6,583 M | 
+| LLaMA-13B |        5120 |       40 |       40 |        2048 |       12,759 M |
+| LLaMA-33B |        6656 |       60 |       52 |        2048 |       32,129 M |
+| LLaMA-65B |        8192 |       80 |       64 |        2048 |       64,711 M |
+
+
+### OpenAI GPT-4 ###
+
+GPT-4 was release in 14 March 2023, but almost all technical details are kept secret. It is known this is a Transformer architecture, and as input it can accept images as well. (The output is purely text.)
+
+| Name      | Hidden size | Dec. no. | Head no. | Max. length | Size of params |
+|-----------|------------:|---------:|---------:|------------:|---------------:|
+| GPT-4-8k  |          ?? |       ?? |       ?? |        8096 |           ?? M | 
+| GPT-4-32k |          ?? |       ?? |       ?? |       32768 |           ?? M |
+
+
 ## Install ##
 
 1. Install Java (version 1.8 or above).
