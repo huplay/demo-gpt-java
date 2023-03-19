@@ -1,10 +1,8 @@
 package ai.demo.gpt;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.TreeSet;
-import static java.lang.Math.exp;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.factory.Nd4j;
+
 import static java.lang.Math.sqrt;
 
 public class Util
@@ -14,14 +12,11 @@ public class Util
      */
     public static float[] addVectors(float[] vector1, float[] vector2)
     {
-        float[] ret = new float[vector1.length];
-
-        for (int i = 0; i < vector1.length; i++)
+        try (INDArray array1 = Nd4j.create(vector1);
+             INDArray array2 = Nd4j.create(vector2))
         {
-            ret[i] = vector1[i] + vector2[i];
+            return array1.add(array2).toFloatVector();
         }
-
-        return ret;
     }
 
     /**
@@ -29,14 +24,7 @@ public class Util
      */
     public static float dotProduct(float[] vector1, float[] vector2)
     {
-        float sum = 0;
-
-        for (int i = 0; i < vector1.length; i++)
-        {
-            sum = sum + vector1[i] * vector2[i];
-        }
-
-        return sum;
+        return Nd4j.create(vector1).mmul(Nd4j.create(vector2)).getFloat(0);
     }
 
     /**
@@ -44,14 +32,7 @@ public class Util
      */
     public static float[] multiplyVectorByScalar(float[] vector, float scalar)
     {
-        float[] ret = new float[vector.length];
-
-        for (int i = 0; i < vector.length; i++)
-        {
-            ret[i] = vector[i] * scalar;
-        }
-
-        return ret;
+        return Nd4j.create(vector).mul(scalar).toFloatVector();
     }
 
     /**
@@ -59,21 +40,7 @@ public class Util
      */
     public static float[] multiplyVectorByMatrix(float[] vector, float[][] matrix)
     {
-        float[] ret = new float[matrix[0].length];
-
-        for (int col = 0; col < matrix[0].length; col++)
-        {
-            float sum = 0;
-
-            for (int i = 0; i < vector.length; i++)
-            {
-                sum = sum + vector[i] * matrix[i][col];
-            }
-
-            ret[col] = sum;
-        }
-
-        return ret;
+        return Nd4j.create(new float[][] {vector}).mmul(Nd4j.create(matrix)).toFloatVector();
     }
 
     /**
@@ -81,21 +48,10 @@ public class Util
      */
     public static float[] multiplyVectorByTransposedMatrix(float[] vector, float[][] matrix)
     {
-        float[] ret = new float[matrix.length];
+        float[][] a2 = new float[1][vector.length];
+        a2[0] = vector;
 
-        for (int row = 0; row < matrix.length; row++)
-        {
-            float sum = 0;
-
-            for (int i = 0; i < vector.length; i++)
-            {
-                sum = sum + vector[i] * matrix[row][i];
-            }
-
-            ret[row] = sum;
-        }
-
-        return ret;
+        return Nd4j.create(a2).mmul(Nd4j.create(matrix).transpose()).toFloatVector();
     }
 
     /**
@@ -103,24 +59,7 @@ public class Util
      */
     public static float[][] splitVector(float[] vector, int count)
     {
-        int size = vector.length / count;
-        float[][] ret = new float[count][size];
-
-        int segment = 0;
-        int col = 0;
-        for (float value : vector)
-        {
-            ret[segment][col] = value;
-
-            if (col == size - 1)
-            {
-                col = 0;
-                segment++;
-            }
-            else col++;
-        }
-
-        return ret;
+        return Nd4j.create(vector).reshape(count, vector.length / count).toFloatMatrix();
     }
 
     /**
@@ -128,20 +67,7 @@ public class Util
      */
     public static float[] flattenMatrix(float[][] matrix)
     {
-        float[] ret = new float[matrix.length * matrix[0].length];
-
-        int i = 0;
-
-        for (float[] row : matrix)
-        {
-            for (float value : row)
-            {
-                ret[i] = value;
-                i++;
-            }
-        }
-
-        return ret;
+        return Nd4j.create(matrix).reshape(matrix.length * matrix[0].length).toFloatVector();
     }
 
     /**
@@ -149,14 +75,7 @@ public class Util
      */
     public static float average(float[] vector)
     {
-        double sum = 0;
-
-        for (float value : vector)
-        {
-            sum = sum + value;
-        }
-
-        return (float) sum / vector.length;
+        return Nd4j.create(vector).meanNumber().floatValue();
     }
 
     /**
