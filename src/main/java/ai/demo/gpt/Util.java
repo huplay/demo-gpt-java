@@ -24,7 +24,11 @@ public class Util
      */
     public static float dotProduct(float[] vector1, float[] vector2)
     {
-        return Nd4j.create(vector1).mmul(Nd4j.create(vector2)).getFloat(0);
+        try (INDArray array1 = Nd4j.create(vector1);
+             INDArray array2 = Nd4j.create(vector2))
+        {
+            return array1.mmul(array2).getFloat(0);
+        }
     }
 
     /**
@@ -32,7 +36,10 @@ public class Util
      */
     public static float[] multiplyVectorByScalar(float[] vector, float scalar)
     {
-        return Nd4j.create(vector).mul(scalar).toFloatVector();
+        try (INDArray array = Nd4j.create(vector))
+        {
+            return array.mul(scalar).toFloatVector();
+        }
     }
 
     /**
@@ -40,7 +47,11 @@ public class Util
      */
     public static float[] multiplyVectorByMatrix(float[] vector, float[][] matrix)
     {
-        return Nd4j.create(new float[][] {vector}).mmul(Nd4j.create(matrix)).toFloatVector();
+        try (INDArray array1 = Nd4j.create(new float[][] {vector});
+             INDArray array2 = Nd4j.create(matrix))
+        {
+            return array1.mmul(array2).toFloatVector();
+        }
     }
 
     /**
@@ -48,10 +59,14 @@ public class Util
      */
     public static float[] multiplyVectorByTransposedMatrix(float[] vector, float[][] matrix)
     {
-        float[][] a2 = new float[1][vector.length];
-        a2[0] = vector;
+        float[][] array = new float[1][vector.length];
+        array[0] = vector;
 
-        return Nd4j.create(a2).mmul(Nd4j.create(matrix).transpose()).toFloatVector();
+        try (INDArray array1 = Nd4j.create(array);
+             INDArray array2 = Nd4j.create(matrix))
+        {
+            return array1.mmul(array2.transpose()).toFloatVector();
+        }
     }
 
     /**
@@ -59,7 +74,10 @@ public class Util
      */
     public static float[][] splitVector(float[] vector, int count)
     {
-        return Nd4j.create(vector).reshape(count, vector.length / count).toFloatMatrix();
+        try (INDArray array = Nd4j.create(vector))
+        {
+            return array.reshape(count, vector.length / count).toFloatMatrix();
+        }
     }
 
     /**
@@ -67,7 +85,12 @@ public class Util
      */
     public static float[] flattenMatrix(float[][] matrix)
     {
-        return Nd4j.create(matrix).reshape(matrix.length * matrix[0].length).toFloatVector();
+        long size = (long) matrix.length * matrix[0].length;
+
+        try (INDArray array = Nd4j.create(matrix))
+        {
+            return array.reshape(size).toFloatVector();
+        }
     }
 
     /**
@@ -75,7 +98,10 @@ public class Util
      */
     public static float average(float[] vector)
     {
-        return Nd4j.create(vector).meanNumber().floatValue();
+        try (INDArray array = Nd4j.create(vector))
+        {
+            return array.meanNumber().floatValue();
+        }
     }
 
     /**
