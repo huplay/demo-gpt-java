@@ -50,7 +50,7 @@ public class App
                 List<Integer> inputTokens = tokenizer.encode(input);
 
                 // Use the Transformer
-                List<Integer> outputTokens = transformer.processTokens(inputTokens);
+                List<Integer> outputTokens = transformer.executeAll(inputTokens);
 
                 // Convert the output to text and print it
                 String response = tokenizer.decode(outputTokens);
