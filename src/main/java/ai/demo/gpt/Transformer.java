@@ -45,7 +45,7 @@ public class Transformer
      * Transformer token processing logic
      * This method implements the logic how the input tokens and the new and new generated tokens are passed to the transformer
      */
-    public List<Integer> processTokens(List<Integer> inputTokens)
+    public List<Integer> executeAll(List<Integer> inputTokens)
     {
         int intputSize = inputTokens.size();
 
@@ -62,33 +62,33 @@ public class Transformer
             for (int pos = 0; pos < intputSize - 1; pos++)
             {
                 OUT.print("."); // Printing a dot to show there is a progress
-                processToken(pos, inputTokens.get(pos));
+                execute(pos, inputTokens.get(pos));
             }
         }
 
         // Collector of the generated new tokens
         List<Integer> result = new ArrayList<>();
 
-        int nextToken = inputTokens.get(intputSize - 1);
+        int token = inputTokens.get(intputSize - 1);
 
         // Use the transformer again an again to generate new tokens
         for (int pos = intputSize - 1; pos < settings.getMaxLength() + intputSize; pos++)
         {
             // Add the last input token or the previously generated new token as input
-            float[] output = processToken(pos, nextToken);
+            float[] output = execute(pos, token);
 
             // The output will be the next new token
-            nextToken = selectNextToken(output);
-            result.add(nextToken);
+            token = selectNextToken(output);
+            result.add(token);
 
             // Exit if the END_OF_TEXT token was chosen or the context size is reached
-            if (nextToken == settings.getEndOfTextToken() || (intputSize + result.size() >= settings.getContextSize())) break;
+            if (token == settings.getEndOfTextToken() || (intputSize + result.size() >= settings.getContextSize())) break;
         }
 
         return result;
     }
 
-    private float[] processToken(int pos, int token)
+    private float[] execute(int pos, int token)
     {
         // Word token embedding
         float[] hiddenState = tokenEmbeddings[token];

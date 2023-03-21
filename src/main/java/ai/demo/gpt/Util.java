@@ -1,10 +1,5 @@
 package ai.demo.gpt;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.TreeSet;
-import static java.lang.Math.exp;
 import static java.lang.Math.sqrt;
 
 public class Util
@@ -145,39 +140,6 @@ public class Util
     }
 
     /**
-     * Calculate average (mean) value
-     */
-    public static float average(float[] vector)
-    {
-        double sum = 0;
-
-        for (float value : vector)
-        {
-            sum = sum + value;
-        }
-
-        return (float) sum / vector.length;
-    }
-
-    /**
-     * Calculate the average difference -
-     */
-    public static float averageDiff(float[] values, float average, float epsilon)
-    {
-        float[] squareDiff = new float[values.length];
-
-        for (int i = 0; i < values.length; i++)
-        {
-            float diff = values[i] - average;
-            squareDiff[i] = diff * diff;
-        }
-
-        float averageSquareDiff = average(squareDiff);
-
-        return (float) sqrt(averageSquareDiff + epsilon);
-    }
-
-    /**
      * Standard normalization - (value - avg) * sqrt( (value - avg)^2 + epsilon)
      */
     public static float[] normalize(float[] vector, float epsilon)
@@ -193,5 +155,32 @@ public class Util
         }
 
         return norm;
+    }
+
+    private static float average(float[] vector)
+    {
+        double sum = 0;
+
+        for (float value : vector)
+        {
+            sum = sum + value;
+        }
+
+        return (float) sum / vector.length;
+    }
+
+    private static float averageDiff(float[] values, float average, float epsilon)
+    {
+        float[] squareDiff = new float[values.length];
+
+        for (int i = 0; i < values.length; i++)
+        {
+            float diff = values[i] - average;
+            squareDiff[i] = diff * diff;
+        }
+
+        float averageSquareDiff = average(squareDiff);
+
+        return (float) sqrt(averageSquareDiff + epsilon);
     }
 }
