@@ -1,22 +1,23 @@
 package ai.demo.gpt;
 
+import jdk.incubator.vector.FloatVector;
+import jdk.incubator.vector.VectorSpecies;
+
 import static java.lang.Math.sqrt;
 
 public class Util
 {
+    static final VectorSpecies<Float> SPECIES = FloatVector.SPECIES_PREFERRED;
+
     /**
      * Vector to vector addition
      */
     public static float[] addVectors(float[] vector1, float[] vector2)
     {
-        float[] ret = new float[vector1.length];
+        var vectorA = FloatVector.fromArray(SPECIES, vector1, 0);
+        var vectorB = FloatVector.fromArray(SPECIES, vector2, 0);
 
-        for (int i = 0; i < vector1.length; i++)
-        {
-            ret[i] = vector1[i] + vector2[i];
-        }
-
-        return ret;
+        return vectorA.add(vectorB).toArray();
     }
 
     /**
