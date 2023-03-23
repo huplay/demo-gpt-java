@@ -1,38 +1,53 @@
 package ai.demo.gpt;
 
 import jdk.incubator.vector.FloatVector;
+import jdk.incubator.vector.VectorMask;
+import jdk.incubator.vector.VectorOperators;
 import jdk.incubator.vector.VectorSpecies;
 
 import static java.lang.Math.sqrt;
 
 public class Util
 {
-    static final VectorSpecies<Float> SPECIES = FloatVector.SPECIES_PREFERRED;
+    static final VectorSpecies<Float> SPECIES = FloatVector.SPECIES_MAX;
 
     /**
      * Vector to vector addition
      */
     public static float[] addVectors(float[] vector1, float[] vector2)
     {
-        var vectorA = FloatVector.fromArray(SPECIES, vector1, 0);
-        var vectorB = FloatVector.fromArray(SPECIES, vector2, 0);
+        float[] result = new float[vector1.length];
 
-        return vectorA.add(vectorB).toArray();
+        for (int i = 0; i < vector1.length; i += SPECIES.length())
+        {
+            VectorMask<Float> mask = SPECIES.indexInRange(i, vector1.length);
+            FloatVector first = FloatVector.fromArray(SPECIES, vector1, i, mask);
+            FloatVector second = FloatVector.fromArray(SPECIES, vector2, i, mask);
+            first.add(second).intoArray(result, i, mask);
+        }
+
+        return result;
     }
 
     /**
      * Dot product calculation (multiplying vector by vector)
      */
-    public static float dotProduct(float[] vector1, float[] vector2)
+    public static float dotProduct(float[] a, float[] b)
     {
-        float sum = 0;
-
-        for (int i = 0; i < vector1.length; i++)
-        {
-            sum = sum + vector1[i] * vector2[i];
+        var upperBound = SPECIES.loopBound(a.length);
+        var sum = FloatVector.zero(SPECIES);
+        var i = 0;
+        for (; i < upperBound; i += SPECIES.length()) {
+            // FloatVector va, vb, vc
+            var va = FloatVector.fromArray(SPECIES, a, i);
+            var vb = FloatVector.fromArray(SPECIES, b, i);
+            sum = va.fma(vb, sum);
         }
-
-        return sum;
+        var c = sum.reduceLanes(VectorOperators.ADD);
+        for (; i < a.length; i++) { // Cleanup loop
+            c += a[i] * b[i];
+        }
+        return c;
     }
 
     /**
@@ -40,14 +55,16 @@ public class Util
      */
     public static float[] multiplyVectorByScalar(float[] vector, float scalar)
     {
-        float[] ret = new float[vector.length];
-
-        for (int i = 0; i < vector.length; i++)
+        float[] result = new float[vector.length];
+        System.out.println(SPECIES.length());
+        for (int i = 0; i < vector.length; i += SPECIES.length())
         {
-            ret[i] = vector[i] * scalar;
+            VectorMask<Float> mask = SPECIES.indexInRange(i, vector.length);
+            FloatVector floatVector = FloatVector.fromArray(SPECIES, vector, i, mask);
+            floatVector.mul(scalar).intoArray(result, i, mask);
         }
 
-        return ret;
+        return result;
     }
 
     /**
@@ -59,17 +76,24 @@ public class Util
 
         for (int col = 0; col < matrix[0].length; col++)
         {
-            float sum = 0;
-
-            for (int i = 0; i < vector.length; i++)
-            {
-                sum = sum + vector[i] * matrix[i][col];
-            }
-
-            ret[col] = sum;
+            ret[col] = dotProduct(vector, getColumn(matrix, col));
         }
 
         return ret;
+    }
+
+    // TODO: If the matrix would be stored as a transposed matrix (first index is the column),
+    // then this method would be obsolete. I guess this is the reason why I had to transpose some weight files from pythorch
+    public static float[] getColumn(float[][] matrix, int index)
+    {
+        float[] column = new float[matrix.length];
+
+        for (int i = 0; i < matrix.length; i++)
+        {
+            column[i] = matrix[i][index];
+        }
+
+        return column;
     }
 
     /**
@@ -77,18 +101,11 @@ public class Util
      */
     public static float[] multiplyVectorByTransposedMatrix(float[] vector, float[][] matrix)
     {
-        float[] ret = new float[matrix.length];
+        float[] ret = new float[matrix[0].length];
 
-        for (int row = 0; row < matrix.length; row++)
+        for (int col = 0; col < matrix[0].length; col++)
         {
-            float sum = 0;
-
-            for (int i = 0; i < vector.length; i++)
-            {
-                sum = sum + vector[i] * matrix[row][i];
-            }
-
-            ret[row] = sum;
+            ret[col] = dotProduct(vector, matrix[col]);
         }
 
         return ret;
