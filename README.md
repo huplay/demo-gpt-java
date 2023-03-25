@@ -142,7 +142,7 @@ The app shows a prompt, where you can provide a text:
 
 You can leave it empty, or type something, which will be continued by the system. If the maximum length is reached, or the response finished by an end-of-text token, a new prompt will be given.
 
-Normally every prompt starts a completely new session (clears the state), but if you want to remain in the same context, start you input text by `//`.
+Normally every prompt starts a completely new session (the state is cleared), but if you want to remain in the same context, start your input text by `//`.
 
 To quit press Ctrl + C.
 
@@ -164,7 +164,7 @@ The files are placed into folders:
 Every dataset should contain a model.properties file, with the following entries:
  - `token.count`: number of tokens
  - `end.of.text.token`: token id for marking the END-OF-TEXT
- - `context.size`: number of tokens the system can process (limited by the position embedding)
+ - `max.length`: context size, the number of tokens the system can process (limited by the position embedding)
  - `hidden.size`: the size of the hidden state
  - `decoder.count`: number of decoders
  - `attention.head.count`: number of attention heads

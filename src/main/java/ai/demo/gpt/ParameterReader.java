@@ -6,126 +6,190 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.channels.FileChannel;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static java.nio.ByteOrder.BIG_ENDIAN;
+import static java.nio.ByteOrder.LITTLE_ENDIAN;
 
 public class ParameterReader
 {
-    public static float[] readVectorFile(String path, String fileName, int size)
+    public final String modelPath;
+    public final Map<String, String> fileMappings = new HashMap<>();
+    public final Map<String, String> matrixOrders = new HashMap<>();
+    private final String dataType;
+    private final ByteOrder byteOrder;
+
+    public ParameterReader(String modelPath) throws Exception
     {
-        return readParameterFile(path + "/" + fileName, size);
+        this.modelPath = modelPath + "/parameters";
+
+        Map<String, String> fileProperties = Settings.readProperties(modelPath + "/files.properties");
+        for (Map.Entry<String, String> entry : fileProperties.entrySet())
+        {
+            if (entry.getKey().startsWith("file."))
+            {
+                fileMappings.put(entry.getKey().substring(5), entry.getValue());
+            }
+            else if (entry.getKey().startsWith("matrix.order."))
+            {
+                matrixOrders.put(entry.getKey().substring(13), entry.getValue());
+            }
+        }
+
+        this.dataType = fileProperties.get("data.type");
+
+        String byteOrder = fileProperties.get("byte.order");
+        this.byteOrder = "LITTLE_ENDIAN".equalsIgnoreCase(byteOrder) ? LITTLE_ENDIAN : BIG_ENDIAN;
     }
 
-    public static float[] readVectorFile(String path, String fileName, int size, boolean isPresent)
+    public float[] readVector(String name, int size)
     {
-        return isPresent ? readVectorFile(path, fileName, size) : null;
+        return read(name, size);
     }
 
-    public static float[][] readMatrixFile(String path, String fileName, int rows, int cols)
+    public float[][] readMatrix(String name, int rows, int cols)
     {
-        float[] numbers = readParameterFile(path + "/" + fileName, rows * cols);
-        return Util.splitVector(numbers, rows);
+        float[] numbers = read(name, rows * cols);
+
+        if (numbers == null) return null;
+
+        boolean isRowOrganised = isRowOrganised(name);
+
+        return toMatrix(numbers, rows, cols, isRowOrganised);
     }
 
-    private static float[] readParameterFile(String fileName, int size)
+    private float[] read(String name, int size)
     {
-        fileName = fileName + ".dat";
+        List<File> files = findFiles(name, size);
+        if (files == null) return null;
+
+        float[] array = new float[size];
+
+        int offset = 0;
+
+        for (File file : files)
+        {
+            int length = (int) file.length() / 4;
+
+            try (FileInputStream stream = new FileInputStream(file))
+            {
+                FileChannel inChannel = stream.getChannel();
+
+                ByteBuffer buffer = inChannel.map(FileChannel.MapMode.READ_ONLY, 0, inChannel.size());
+
+                buffer.order(byteOrder);
+                FloatBuffer floatBuffer = buffer.asFloatBuffer();
+                floatBuffer.get(array, offset, length);
+
+                // TODO: FLOAT16 isn't supported here
+
+                offset += length;
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException("Parameter file read error. (" + file.getName() + ")");
+            }
+        }
+
+        return array;
+    }
+
+    private float[][] toMatrix(float[] numbers, int rows, int cols, boolean isRowOrganised)
+    {
+        if (isRowOrganised)
+        {
+            return Util.splitVector(numbers, rows);
+        }
+        else
+        {
+            float[][] transposed = new float[rows][cols];
+
+            int n = 0;
+            for (int i = 0; i < cols; i++)
+            {
+                for (int j = 0; j < rows; j++)
+                {
+                    transposed[j][i] = numbers[n];
+                    n++;
+                }
+            }
+
+            return transposed;
+        }
+    }
+
+    private boolean isRowOrganised(String name)
+    {
+        for (Map.Entry<String, String> entry : matrixOrders.entrySet())
+        {
+            Pattern pattern = Pattern.compile(entry.getKey().replace(".", "\\.").replace("*", ".*"));
+            Matcher matcher = pattern.matcher(name);
+            if (matcher.matches())
+            {
+                return entry.getValue().equalsIgnoreCase("ROW");
+            }
+        }
+
+        return true;
+    }
+
+    private List<File> findFiles(String name, int size)
+    {
+        String mappedName = fileMappings.get(name);
+
+        if (mappedName == null) mappedName = name + ".dat";
+        else if (mappedName.equalsIgnoreCase("<null>")) return null;
+
+        List<File> files = new ArrayList<>();
+        long sumSize = 0;
+
+        String fileName = modelPath + "/" + mappedName;
         File file = new File(fileName);
 
         if (file.exists())
         {
-            if (file.length() != (long) size * 4)
-            {
-                throw new RuntimeException("The size of the file (" + fileName + ", " + file.length() + ") is incorrect. Expected: " + size * 4);
-            }
-
-            return readFile(file);
+            files.add(file);
+            sumSize = file.length();
         }
         else
         {
             // Handling files split into parts
-            List<File> partFiles = findPartFiles(fileName);
-
-            if ( ! partFiles.isEmpty())
+            int i = 1;
+            while (true)
             {
-                float[][] parts = new float[partFiles.size()][size];
+                File partFile = new File(fileName + ".part" + i);
 
-                // Read all the part files
-                int i = 0;
-                int sumSize = 0;
-                for (File partFile : partFiles)
+                if (partFile.exists())
                 {
-                    parts[i] = readFile(partFile);
-                    sumSize += parts[i].length;
-                    i++;
+                    files.add(partFile);
+                    sumSize += partFile.length();
                 }
+                else break;
 
-                if (sumSize != size)
-                {
-                    throw new RuntimeException("The sum size of the file parts (" + sumSize * 4 + ") is incorrect. Expected: " + (size * 4));
-                }
-
-                // Concatenate the parts into a single array
-                float[] ret = new float[sumSize];
-
-                int index = 0;
-                for (float[] part : parts)
-                {
-                    for (float value : part)
-                    {
-                        ret[index] = value;
-                        index++;
-                    }
-                }
-
-                return ret;
+                i++;
             }
-            else
+
+            if (files.isEmpty())
             {
                 throw new RuntimeException("Parameter file not found: " + fileName);
             }
         }
+
+        checkSize(files, size, sumSize);
+
+        return files;
     }
 
-    private static List<File> findPartFiles(String fileName)
+    private void checkSize(List<File> files, long expectedSize, long actualSize)
     {
-        List<File> partFiles = new ArrayList<>();
+        int numberSize = dataType.equals("FLOAT16") ? 2 : 4;
 
-        int i = 1;
-        while (true)
+        if (actualSize != expectedSize * numberSize)
         {
-            File partFile = new File(fileName + ".part" + i);
-
-            if (partFile.exists()) partFiles.add(partFile);
-            else break;
-
-            i++;
+            throw new RuntimeException("The size of the file(s) (" + files + ", " + actualSize +
+                    ") is incorrect. Expected: " + expectedSize * numberSize);
         }
-
-        return partFiles;
-    }
-
-    private static float[] readFile(File file)
-    {
-        int size = (int) (file.length() / 4);
-
-        float[] array = new float[size];
-
-        try (FileInputStream stream = new FileInputStream(file))
-        {
-            FileChannel inChannel = stream.getChannel();
-
-            ByteBuffer buffer = inChannel.map(FileChannel.MapMode.READ_ONLY, 0, inChannel.size());
-
-            buffer.order(ByteOrder.BIG_ENDIAN);
-            FloatBuffer floatBuffer = buffer.asFloatBuffer();
-            floatBuffer.get(array);
-        }
-        catch (Exception e)
-        {
-            throw new RuntimeException("Parameter file read error. (" + file.getName() + ")");
-        }
-
-        return array;
     }
 }

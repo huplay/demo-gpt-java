@@ -12,12 +12,11 @@ public class Settings
     public static final String ATTENTION_LOCAL = "local";
     public static final String ATTENTION_NONE = "none";
 
-    private final String path;
-    private final int maxLength;
-    private final int topK;
+    private final App.Arguments arguments;
+
     private final int tokenCount;
     private final int endOfTextToken;
-    private final int contextSize;
+    private final int maxLength;
     private final int hiddenSize;
     private final int decoderCount;
     private final int headCount;
@@ -25,62 +24,24 @@ public class Settings
     private final String[] attentionType;
     private final float epsilon;
     private final int localAttentionSize;
-    private final boolean hasAttentionQueryBias;
-    private final boolean hasAttentionKeyBias;
-    private final boolean hasAttentionValueBias;
-    private final boolean hasAttentionProjectionBias;
-    private final boolean hasMlpLayer1Bias;
-    private final boolean hasMlpLayer2Bias;
 
-    public Settings(String path, int maxLength, int topK) throws Exception
+    public Settings(App.Arguments arguments) throws Exception
     {
-        this.path = path;
-        this.maxLength = maxLength;
-        this.topK = topK;
+        this.arguments = arguments;
 
         // Read all properties from the model.properties file
-        Map<String, String> properties = new HashMap<>();
-
-        String fileName = path + "/model.properties";
-        try (Scanner scanner = new Scanner(new File(fileName)))
-        {
-            while (scanner.hasNextLine())
-            {
-                String line = scanner.nextLine();
-                if (line != null && !line.trim().equals("") && !line.startsWith("#"))
-                {
-                    String[] parts = line.split("=");
-                    if (parts.length == 2)
-                    {
-                        properties.put(parts[0].toLowerCase().trim(), parts[1].toLowerCase().trim());
-                    }
-                    else
-                    {
-                        OUT.println("\nWARNING: Unrecognizable properties line: (" + fileName + "): " + line);
-                    }
-                }
-            }
-        }
-        catch (IOException e)
-        {
-            throw new Exception("Cannot read model.properties file: " + fileName);
-        }
+        String fileName = arguments.getPath() + "/" + arguments.getName() + "/model.properties";
+        Map<String, String> properties = readProperties(fileName);
 
         // Find the necessary in the collected properties
         tokenCount = getIntProperty(properties, "token.count");
         endOfTextToken = getIntProperty(properties, "end.of.text.token");
-        contextSize = getIntProperty(properties, "context.size");
+        maxLength = getIntProperty(properties, "max.length");
         hiddenSize = getIntProperty(properties, "hidden.size");
         decoderCount = getIntProperty(properties, "decoder.count");
         headCount = getIntProperty(properties, "attention.head.count");
         scoreDividend = getIntProperty(properties, "attention.score.dividend");
         epsilon = getFloatProperty(properties, "epsilon");
-        hasAttentionQueryBias = getBooleanProperty(properties, "has.attention.query.bias", true);
-        hasAttentionKeyBias = getBooleanProperty(properties, "has.attention.key.bias", true);
-        hasAttentionValueBias = getBooleanProperty(properties, "has.attention.value.bias", true);
-        hasAttentionProjectionBias = getBooleanProperty(properties, "has.attention.projection.bias", true);
-        hasMlpLayer1Bias = getBooleanProperty(properties, "has.mlp.layer.1.bias", true);
-        hasMlpLayer2Bias = getBooleanProperty(properties, "has.mlp.layer.2.bias", true);
 
         boolean isLocalUsed = false;
 
@@ -106,10 +67,41 @@ public class Settings
         else localAttentionSize = Integer.MAX_VALUE;
     }
 
+    public static Map<String, String> readProperties(String fileName) throws Exception
+    {
+        Map<String, String> properties = new HashMap<>();
+
+        try (Scanner scanner = new Scanner(new File(fileName)))
+        {
+            while (scanner.hasNextLine())
+            {
+                String line = scanner.nextLine();
+                if (line != null && !line.trim().equals("") && !line.startsWith("#"))
+                {
+                    String[] parts = line.split("=");
+                    if (parts.length == 2)
+                    {
+                        properties.put(parts[0].toLowerCase().trim(), parts[1].toLowerCase().trim());
+                    }
+                    else
+                    {
+                        OUT.println("\nWARNING: Unrecognizable properties line: (" + fileName + "): " + line);
+                    }
+                }
+            }
+        }
+        catch (IOException e)
+        {
+            throw new Exception("Cannot read model.properties file: " + fileName);
+        }
+
+        return properties;
+    }
+
     public long getParameterSize()
     {
         long wteSize = (long) tokenCount * hiddenSize;
-        long wpeSize = (long) contextSize * hiddenSize;
+        long wpeSize = (long) maxLength * hiddenSize;
         long finalNormSize = (long) hiddenSize * 2;
 
         return wteSize + wpeSize + (getDecoderParameterSize() * decoderCount) + finalNormSize;
@@ -198,17 +190,17 @@ public class Settings
 
     public String getPath()
     {
-        return path;
+        return arguments.getPath();
     }
 
-    public int getMaxLength()
+    public int getLengthLimit()
     {
-        return maxLength;
+        return arguments.getLengthLimit();
     }
 
     public int getTopK()
     {
-        return topK;
+        return arguments.getTopK();
     }
 
     public int getTokenCount()
@@ -221,9 +213,9 @@ public class Settings
         return endOfTextToken;
     }
 
-    public int getContextSize()
+    public int getMaxLength()
     {
-        return contextSize;
+        return maxLength;
     }
 
     public int getHiddenSize()
@@ -259,35 +251,5 @@ public class Settings
     public int getLocalAttentionSize()
     {
         return localAttentionSize;
-    }
-
-    public boolean hasAttentionQueryBias()
-    {
-        return hasAttentionQueryBias;
-    }
-
-    public boolean hasAttentionKeyBias()
-    {
-        return hasAttentionKeyBias;
-    }
-
-    public boolean hasAttentionValueBias()
-    {
-        return hasAttentionValueBias;
-    }
-
-    public boolean hasAttentionProjectionBias()
-    {
-        return hasAttentionProjectionBias;
-    }
-
-    public boolean hasMlpLayer1Bias()
-    {
-        return hasMlpLayer1Bias;
-    }
-
-    public boolean hasMlpLayer2Bias()
-    {
-        return hasMlpLayer2Bias;
     }
 }

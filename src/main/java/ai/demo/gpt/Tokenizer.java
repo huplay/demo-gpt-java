@@ -29,7 +29,7 @@ public class Tokenizer
     /**
      * Initialization
      */
-    public Tokenizer(String parametersPath)
+    public Tokenizer(String tokenizerName)
     {
         addCharRange(0, 'Ā', 'Ġ');
         addCharRange(33, '!', '~');
@@ -38,7 +38,7 @@ public class Tokenizer
         addCharRange(173, 'Ń', 'Ń');
         addCharRange(174, '®', 'ÿ');
 
-        String path = parametersPath + "/tokenizer";
+        String path = "tokenizers/" + tokenizerName;
 
         readTokensFile(path);
         readMergesFile(path);

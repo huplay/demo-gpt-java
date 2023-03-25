@@ -2,7 +2,6 @@ package ai.demo.gpt;
 
 import java.util.*;
 import static ai.demo.gpt.App.OUT;
-import static ai.demo.gpt.ParameterReader.*;
 import static ai.demo.gpt.TransformerUtil.*;
 
 /**
@@ -21,23 +20,23 @@ public class Transformer
     /**
      * Initialization
      */
-    public Transformer(Settings settings, Tokenizer tokenizer)
+    public Transformer(Settings settings, Tokenizer tokenizer, ParameterReader parameterReader)
     {
-        String path = settings.getPath();
-        int hiddenSize = settings.getHiddenSize();
-
         this.settings = settings;
         this.tokenizer = tokenizer;
-        this.tokenEmbeddings = readMatrixFile(path, "input/wte", settings.getTokenCount(), hiddenSize);
-        this.positionEmbeddings = readMatrixFile(path, "input/wpe", settings.getContextSize(), hiddenSize);
-        this.normFinalWeights = readVectorFile(path, "output/norm.w", hiddenSize);
-        this.normFinalBiases = readVectorFile(path, "output/norm.b", hiddenSize);
+
+        int hiddenSize = settings.getHiddenSize();
+
+        this.tokenEmbeddings = parameterReader.readMatrix("input/wte", settings.getTokenCount(), hiddenSize);
+        this.positionEmbeddings = parameterReader.readMatrix("input/wpe", settings.getMaxLength(), hiddenSize);
+        this.normFinalWeights = parameterReader.readVector("output/norm.w", hiddenSize);
+        this.normFinalBiases = parameterReader.readVector("output/norm.b", hiddenSize);
 
         // Create the decoder stack
         this.decoders = new TransformerDecoder[settings.getDecoderCount()];
         for (int i = 0; i < settings.getDecoderCount(); i++)
         {
-            this.decoders[i] = new TransformerDecoder(i, settings, settings.getAttentionType()[i]);
+            this.decoders[i] = new TransformerDecoder(i, settings, settings.getAttentionType()[i], parameterReader);
         }
     }
 
@@ -72,7 +71,7 @@ public class Transformer
         int token = inputTokens.get(intputSize - 1);
 
         // Use the transformer again an again to generate new tokens
-        for (int pos = intputSize - 1; pos < settings.getMaxLength() + intputSize; pos++)
+        for (int pos = intputSize - 1; pos < settings.getLengthLimit() + intputSize; pos++)
         {
             // Add the last input token or the previously generated new token as input
             float[] output = execute(pos, token);
@@ -81,8 +80,8 @@ public class Transformer
             token = selectNextToken(output);
             result.add(token);
 
-            // Exit if the END_OF_TEXT token was chosen or the context size is reached
-            if (token == settings.getEndOfTextToken() || (intputSize + result.size() >= settings.getContextSize())) break;
+            // Exit if the END_OF_TEXT token was chosen or the maximum length is reached
+            if (token == settings.getEndOfTextToken() || (intputSize + result.size() >= settings.getMaxLength())) break;
         }
 
         return result;

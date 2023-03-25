@@ -22,17 +22,18 @@ public class App
         {
             Arguments arguments = readArguments(args);
 
-            OUT.println("Path: " + arguments.getPath());
+            OUT.println("Model: " + arguments.getPath() + "/" + arguments.getName());
 
-            Settings settings = new Settings(arguments.getPath(), arguments.getMaxLength(), arguments.getTopK());
+            Settings settings = new Settings(arguments);
 
             OUT.println("Number of parameters: " + Math.round(settings.getParameterSize() / 1000000d) + " M");
-            OUT.println("Maximum length of generated text: " + arguments.getMaxLength());
+            OUT.println("Maximum length of generated text: " + arguments.getLengthLimit());
             OUT.println("Output is selected from the best " + arguments.getTopK() + " tokens (topK)");
 
             OUT.print("\nLoading trained parameters... ");
-            Tokenizer tokenizer = new Tokenizer(arguments.getPath());
-            Transformer transformer = new Transformer(settings, tokenizer);
+            Tokenizer tokenizer = new Tokenizer("GPT-2");
+            ParameterReader parameterReader = new ParameterReader(arguments.getModelPath());
+            Transformer transformer = new Transformer(settings, tokenizer, parameterReader);
             OUT.print("Done.");
 
             while (true)
@@ -86,11 +87,12 @@ public class App
         // Default values
         if (args == null || args.length == 0)
         {
-            throw new Exception("The first parameter should be the path of the model parameters.");
+            throw new Exception("The first parameter should be the model name.");
         }
 
-        String path = args[0];
+        String name = args[0];
 
+        String path = "models";
         int maxLength = 25;
         int topK = 40;
 
@@ -105,6 +107,7 @@ public class App
                     String param = parts[0].toLowerCase();
                     String value = parts[1];
 
+                    if (param.equals("path")) path = value;
                     if (param.equals("maxlength")) maxLength = readInt(value, maxLength);
                     else if (param.equals("topk")) topK = readInt(value, topK);
                 }
@@ -112,7 +115,7 @@ public class App
             }
         }
 
-        return new Arguments(path, maxLength, topK);
+        return new Arguments(name, path, maxLength, topK);
     }
 
     private static int readInt(String value, int defaultValue)
@@ -129,17 +132,24 @@ public class App
         return defaultValue;
     }
 
-    private static class Arguments
+    public static class Arguments
     {
+        private final String name;
         private final String path;
-        private final int maxLength;
+        private final int lengthLimit;
         private final int topK;
 
-        public Arguments(String path, int maxLength, int topK)
+        public Arguments(String name, String path, int lengthLimit, int topK)
         {
+            this.name = name;
             this.path = path;
-            this.maxLength = maxLength;
+            this.lengthLimit = lengthLimit;
             this.topK = topK;
+        }
+
+        public String getName()
+        {
+            return name;
         }
 
         public String getPath()
@@ -147,14 +157,19 @@ public class App
             return path;
         }
 
-        public int getMaxLength()
+        public int getLengthLimit()
         {
-            return maxLength;
+            return lengthLimit;
         }
 
         public int getTopK()
         {
             return topK;
+        }
+
+        public String getModelPath()
+        {
+            return path + "/" + name;
         }
     }
 }

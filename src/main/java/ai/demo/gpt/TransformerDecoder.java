@@ -2,7 +2,6 @@ package ai.demo.gpt;
 
 import java.util.ArrayList;
 import java.util.List;
-import static ai.demo.gpt.ParameterReader.*;
 import static ai.demo.gpt.Settings.*;
 import static ai.demo.gpt.TransformerUtil.*;
 
@@ -36,31 +35,31 @@ public class TransformerDecoder
     /**
      * Initialization
      */
-    public TransformerDecoder(int decoderId, Settings settings, String attentionType)
+    public TransformerDecoder(int decoderId, Settings settings, String attentionType, ParameterReader reader)
     {
         this.settings = settings;
         this.hasAttention = !attentionType.equals(ATTENTION_NONE);
         this.maxAttentionSize = attentionType.equals(ATTENTION_LOCAL) ? settings.getLocalAttentionSize() : Integer.MAX_VALUE;
 
-        String path = settings.getPath() + "/decoder" + (decoderId + 1);
+        String decoder = "decoder" + (decoderId + 1) + "/";
         int hiddenSize = settings.getHiddenSize();
 
-        this.queryWeights = readMatrixFile(path, "att.query.w", hiddenSize, hiddenSize);
-        this.queryBiases = readVectorFile(path, "att.query.b", hiddenSize, settings.hasAttentionQueryBias());
-        this.keyWeights = readMatrixFile(path, "att.key.w", hiddenSize, hiddenSize);
-        this.keyBiases = readVectorFile(path, "att.key.b", hiddenSize, settings.hasAttentionKeyBias());
-        this.valueWeights = readMatrixFile(path, "att.value.w", hiddenSize, hiddenSize);
-        this.valueBiases = readVectorFile(path, "att.value.b", hiddenSize, settings.hasAttentionValueBias());
-        this.projectionWeights = readMatrixFile(path, "att.proj.w", hiddenSize, hiddenSize);
-        this.projectionBiases = readVectorFile(path, "att.proj.b", hiddenSize, settings.hasAttentionProjectionBias());
-        this.attNormWeights = readVectorFile(path, "att.norm.w", hiddenSize);
-        this.attNormBiases = readVectorFile(path, "att.norm.b", hiddenSize);
-        this.mlpLayer1Weights = readMatrixFile(path, "mlp.layer1.w", hiddenSize, hiddenSize * 4);
-        this.mlpLayer1Biases = readVectorFile(path, "mlp.layer1.b", hiddenSize * 4, settings.hasMlpLayer1Bias());
-        this.mlpLayer2Weights = readMatrixFile(path, "mlp.layer2.w", hiddenSize * 4, hiddenSize);
-        this.mlpLayer2Biases = readVectorFile(path, "mlp.layer2.b", hiddenSize, settings.hasMlpLayer2Bias());
-        this.mlpNormWeights = readVectorFile(path, "mlp.norm.w", hiddenSize);
-        this.mlpNormBiases = readVectorFile(path, "mlp.norm.b", hiddenSize);
+        this.queryWeights = reader.readMatrix(decoder + "att.query.w", hiddenSize, hiddenSize);
+        this.queryBiases = reader.readVector(decoder + "att.query.b", hiddenSize);
+        this.keyWeights = reader.readMatrix(decoder + "att.key.w", hiddenSize, hiddenSize);
+        this.keyBiases = reader.readVector(decoder + "att.key.b", hiddenSize);
+        this.valueWeights = reader.readMatrix(decoder + "att.value.w", hiddenSize, hiddenSize);
+        this.valueBiases = reader.readVector(decoder + "att.value.b", hiddenSize);
+        this.projectionWeights = reader.readMatrix(decoder + "att.proj.w", hiddenSize, hiddenSize);
+        this.projectionBiases = reader.readVector(decoder + "att.proj.b", hiddenSize);
+        this.attNormWeights = reader.readVector(decoder + "att.norm.w", hiddenSize);
+        this.attNormBiases = reader.readVector(decoder + "att.norm.b", hiddenSize);
+        this.mlpLayer1Weights = reader.readMatrix(decoder + "mlp.layer1.w", hiddenSize, hiddenSize * 4);
+        this.mlpLayer1Biases = reader.readVector(decoder + "mlp.layer1.b", hiddenSize * 4);
+        this.mlpLayer2Weights = reader.readMatrix(decoder + "mlp.layer2.w", hiddenSize * 4, hiddenSize);
+        this.mlpLayer2Biases = reader.readVector(decoder + "mlp.layer2.b", hiddenSize);
+        this.mlpNormWeights = reader.readVector(decoder + "mlp.norm.w", hiddenSize);
+        this.mlpNormBiases = reader.readVector(decoder + "mlp.norm.b", hiddenSize);
     }
 
     /**
