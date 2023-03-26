@@ -134,7 +134,7 @@ public class TransformerDecoder
             for (int pos = 0; pos < storedKeys.size(); pos++)
             {
                 // The score is calculated multiplying the "actual" query vector and the "related" key vector
-                scores[pos] = Util.dotProduct(queries[head], storedKeys.get(pos)[head]) / settings.getScoreDividend();
+                scores[pos] = Util.dotProduct(queries[head], storedKeys.get(pos)[head]) / settings.getAttentionDividend();
             }
 
             // Softmax

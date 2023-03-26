@@ -20,7 +20,7 @@ public class Settings
     private final int hiddenSize;
     private final int decoderCount;
     private final int headCount;
-    private final int scoreDividend;
+    private final int attentionDividend;
     private final String[] attentionType;
     private final float epsilon;
     private final int localAttentionSize;
@@ -40,7 +40,7 @@ public class Settings
         hiddenSize = getIntProperty(properties, "hidden.size");
         decoderCount = getIntProperty(properties, "decoder.count");
         headCount = getIntProperty(properties, "attention.head.count");
-        scoreDividend = getIntProperty(properties, "attention.score.dividend");
+        attentionDividend = getIntProperty(properties, "attention.dividend");
         epsilon = getFloatProperty(properties, "epsilon");
 
         boolean isLocalUsed = false;
@@ -128,11 +128,6 @@ public class Settings
         return toFloat(getProperty(properties, key));
     }
 
-    private boolean getBooleanProperty(Map<String, String> properties, String key, boolean defaultValue) throws Exception
-    {
-        return toBoolean(getProperty(properties, key, true), defaultValue);
-    }
-
     private String getProperty(Map<String, String> properties, String key) throws Exception
     {
         return getProperty(properties, key, false);
@@ -171,20 +166,6 @@ public class Settings
         catch (Exception e)
         {
             throw new Exception("The provided properties value can't be converted to float (" + value + ").");
-        }
-    }
-
-    private boolean toBoolean(String value, boolean defaultValue) throws Exception
-    {
-        if (value == null) return defaultValue;
-
-        try
-        {
-            return Boolean.parseBoolean(value);
-        }
-        catch (Exception e)
-        {
-            throw new Exception("The provided properties value can't be converted to boolean (" + value + ").");
         }
     }
 
@@ -233,9 +214,9 @@ public class Settings
         return headCount;
     }
 
-    public int getScoreDividend()
+    public int getAttentionDividend()
     {
-        return scoreDividend;
+        return attentionDividend;
     }
 
     public float getEpsilon()
