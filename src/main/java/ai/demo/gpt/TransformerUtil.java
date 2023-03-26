@@ -43,7 +43,7 @@ public class TransformerUtil
 
     /**
      * Gaussian Error Linear Unit (GELU) cumulative distribution activation function (approximate implementation)
-     * Original paper: https://paperswithcode.com/method/gelu
+     * Original paper: <a href="https://paperswithcode.com/method/gelu" />
      */
     public static float gelu(float value)
     {

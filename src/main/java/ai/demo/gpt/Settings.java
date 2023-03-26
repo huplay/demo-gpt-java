@@ -1,10 +1,13 @@
 package ai.demo.gpt;
 
 import java.io.*;
+import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import static ai.demo.gpt.App.OUT;
+import static java.nio.ByteOrder.BIG_ENDIAN;
+import static java.nio.ByteOrder.LITTLE_ENDIAN;
 
 public class Settings
 {
@@ -24,6 +27,11 @@ public class Settings
     private final String[] attentionType;
     private final float epsilon;
     private final int localAttentionSize;
+
+    public final Map<String, String> fileMappings = new HashMap<>();
+    public final Map<String, String> matrixOrders = new HashMap<>();
+    private final String dataType;
+    private final ByteOrder byteOrder;
 
     public Settings(App.Arguments arguments) throws Exception
     {
@@ -65,6 +73,23 @@ public class Settings
 
         if (isLocalUsed) localAttentionSize = toInt(getProperty(properties, "attention.local.size"));
         else localAttentionSize = Integer.MAX_VALUE;
+
+        for (Map.Entry<String, String> entry : properties.entrySet())
+        {
+            if (entry.getKey().startsWith("file."))
+            {
+                fileMappings.put(entry.getKey().substring(5), entry.getValue());
+            }
+            else if (entry.getKey().startsWith("matrix.order."))
+            {
+                matrixOrders.put(entry.getKey().substring(13), entry.getValue());
+            }
+        }
+
+        this.dataType = properties.get("data.type");
+
+        String byteOrder = properties.get("byte.order");
+        this.byteOrder = "LITTLE_ENDIAN".equalsIgnoreCase(byteOrder) ? LITTLE_ENDIAN : BIG_ENDIAN;
     }
 
     public static Map<String, String> readProperties(String fileName) throws Exception
@@ -232,5 +257,25 @@ public class Settings
     public int getLocalAttentionSize()
     {
         return localAttentionSize;
+    }
+
+    public Map<String, String> getFileMappings()
+    {
+        return fileMappings;
+    }
+
+    public Map<String, String> getMatrixOrders()
+    {
+        return matrixOrders;
+    }
+
+    public String getDataType()
+    {
+        return dataType;
+    }
+
+    public ByteOrder getByteOrder()
+    {
+        return byteOrder;
     }
 }

@@ -32,7 +32,7 @@ public class App
 
             OUT.print("\nLoading trained parameters... ");
             Tokenizer tokenizer = new Tokenizer("GPT-2");
-            ParameterReader parameterReader = new ParameterReader(arguments.getModelPath());
+            ParameterReader parameterReader = new ParameterReader(arguments.getModelPath(), settings);
             Transformer transformer = new Transformer(settings, tokenizer, parameterReader);
             OUT.print("Done.");
 

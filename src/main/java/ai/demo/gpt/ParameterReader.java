@@ -3,45 +3,21 @@ package ai.demo.gpt;
 import java.io.File;
 import java.io.FileInputStream;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static java.nio.ByteOrder.BIG_ENDIAN;
-import static java.nio.ByteOrder.LITTLE_ENDIAN;
-
 public class ParameterReader
 {
-    public final String modelPath;
-    public final Map<String, String> fileMappings = new HashMap<>();
-    public final Map<String, String> matrixOrders = new HashMap<>();
-    private final String dataType;
-    private final ByteOrder byteOrder;
+    private final String modelPath;
+    private final Settings settings;
 
-    public ParameterReader(String modelPath) throws Exception
+    public ParameterReader(String modelPath, Settings settings)
     {
         this.modelPath = modelPath + "/parameters";
-
-        Map<String, String> fileProperties = Settings.readProperties(modelPath + "/files.properties");
-        for (Map.Entry<String, String> entry : fileProperties.entrySet())
-        {
-            if (entry.getKey().startsWith("file."))
-            {
-                fileMappings.put(entry.getKey().substring(5), entry.getValue());
-            }
-            else if (entry.getKey().startsWith("matrix.order."))
-            {
-                matrixOrders.put(entry.getKey().substring(13), entry.getValue());
-            }
-        }
-
-        this.dataType = fileProperties.get("data.type");
-
-        String byteOrder = fileProperties.get("byte.order");
-        this.byteOrder = "LITTLE_ENDIAN".equalsIgnoreCase(byteOrder) ? LITTLE_ENDIAN : BIG_ENDIAN;
+        this.settings = settings;
     }
 
     public float[] readVector(String name, int size)
@@ -79,7 +55,7 @@ public class ParameterReader
 
                 ByteBuffer buffer = inChannel.map(FileChannel.MapMode.READ_ONLY, 0, inChannel.size());
 
-                buffer.order(byteOrder);
+                buffer.order(settings.getByteOrder());
                 FloatBuffer floatBuffer = buffer.asFloatBuffer();
                 floatBuffer.get(array, offset, length);
 
@@ -122,7 +98,7 @@ public class ParameterReader
 
     private boolean isRowOrganised(String name)
     {
-        for (Map.Entry<String, String> entry : matrixOrders.entrySet())
+        for (Map.Entry<String, String> entry : settings.getMatrixOrders().entrySet())
         {
             Pattern pattern = Pattern.compile(entry.getKey().replace(".", "\\.").replace("*", ".*"));
             Matcher matcher = pattern.matcher(name);
@@ -137,7 +113,7 @@ public class ParameterReader
 
     private List<File> findFiles(String name, int size)
     {
-        String mappedName = fileMappings.get(name);
+        String mappedName = settings.getFileMappings().get(name);
 
         if (mappedName == null) mappedName = name + ".dat";
         else if (mappedName.equalsIgnoreCase("<null>")) return null;
@@ -184,7 +160,7 @@ public class ParameterReader
 
     private void checkSize(List<File> files, long expectedSize, long actualSize)
     {
-        int numberSize = dataType.equals("FLOAT16") ? 2 : 4;
+        int numberSize = settings.getDataType().equals("FLOAT16") ? 2 : 4;
 
         if (actualSize != expectedSize * numberSize)
         {
