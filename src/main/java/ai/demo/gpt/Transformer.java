@@ -69,6 +69,7 @@ public class Transformer
         List<Integer> result = new ArrayList<>();
 
         int token = inputTokens.get(intputSize - 1);
+        OUT.print(".");
 
         // Use the transformer again an again to generate new tokens
         for (int pos = intputSize - 1; pos < settings.getLengthLimit() + intputSize; pos++)
