@@ -2,10 +2,9 @@
 
 This is a demo application which implements the GPT-2/3 and similar artificial intelligence language models in Java, for learning purposes.
 
-The goal is to demonstrate the decoder-only transformer architecture (without training), not to create an optimized application. (Larger models are very slow.)
+The goal is to demonstrate the decoder-only transformer architecture (without training), not to create an optimized application.
 
-TensorFlow, Pytorch or similar tools are NOT used, everything is implemented here. (There are separate branches using ND4j or Java Vector API.)
-
+TensorFlow, Pytorch or similar tools are NOT used. The core mathematical utility is implemented in three versions, you can select which one to use.
 
 ## Trained parameters ##
 
@@ -18,37 +17,54 @@ For the details how to port a model see `MODELS.md` under the `models` folder.
 
 ## Install ##
 
-1. Install Java (version 1.8 or above) and Maven.
+1. Install Java. For the standard version 1.8 or above. For the Vector API implementation at least Java 20 (faster).
 
 
-2. Download and unzip this module: https://github.com/huplay/demo-gpt-java
+2. Install Maven. (Java compile/build tool) (3.8.6 used during development).
+
+
+3. Download and unzip this module: https://github.com/huplay/demo-gpt-java
 
    (Or using git: ```git clone https://github.com/huplay/demo-gpt-java.git```)
 
 
-3. Download and unzip the files with the trained parameters for the version you want to use.
+4. Download and unzip the files with the trained parameters for the version you want to use.
 
-    Because of the GitHub repo size limit, the parameters for the larger models stored in multiple repos. Copy these into a single folder.
+   The files should be placed into the `models/<model name>/parameters` folder, so for example using the GPT-2 XL version to `models/GPT-2-XL/parameters`. 
+
+   See the `models/MODELS.md` file how to collect parameters for a particular model.
 
 
-4. Using a command line tool (`cmd`) enter into the main directory:
+5. Using a command line tool (`cmd`) enter into the main directory:
    
     ```cd demo-gpt-java```
 
 
-5. Compile (build) the application:
+6. Compile (build) the application. There are 3 possibilities, based on that which utility implementation you want to use.
+   Standard: 
 
-   ```mvn clean install```
+   ```mvn clean install -Pstandard```
+
+   Using Nd4j:
+
+   ```mvn clean install -Pnd4j```
+
+   Using Java Vector API:
+
+   ```mvn clean install -Pvector-api```
 
 
 ## Execution ##
 
 Execute the application:
-```run < model-name >``` (On Windows)
+```run <model-name>``` (On Windows)
     
-Or on any systems:```java -cp target/demo-gpt-java-1.0.jar ai.demo.gpt.App < model-name >``` 
+Or on any systems:```java -jar target/demo-gpt-app.jar <model-name>```
+
+If you want to use the Vector API version (in the case you installed that variant) you have to use the ``run2 <model-name>`` command.
+This is necessary because in Java 20 the Vector API isn't ready, added only as an incubator module, so we have to execute the Java Virtual Machine telling we want to use this incubator feature. 
   
-Using larger models it is necessary to increase the heap size (memory for Java). The ```run.bat``` handles it automatically, but if the app is called directly you should use the Java -Xmx and Xms flags. 
+Using larger models it is necessary to increase the heap size (memory for Java). The ```run.bat / run2.bat``` handles it automatically, but if the app is called directly you should use the Java -Xmx and Xms flags. 
 
 
 ## Additional command line parameters ##
@@ -64,11 +80,27 @@ The app shows a prompt, where you can provide a text:
 
 ```Input text:```
 
-You can leave it empty, or type something, which will be continued by the system. If the maximum length is reached, or the response finished by an end-of-text token, a new prompt will be given.
+You can leave it empty, or type something, which will be continued by the system. While the input tokens are processed a `.` character is displayed. (One for every token.)
+After that the system prints the generated tokens (one by one). If the maximum length is reached, or the response finished by an `END-OF-TEXT` token, a new prompt will be given.
 
 Normally every prompt starts a completely new session (the state is cleared), but if you want to remain in the same context, start your input text by `//`.
 
 To quit press Ctrl + C.
+
+If the response contained special unicode characters, where a single character is constructed using multiple tokens, then the "one by one" printing solution will show "?" characters. But after the text is fully generated the whole text will be printed again to show the correct characters. (Only at cases when the original print wasn't perfect.) 
+
+
+## Tokenizer ##
+
+All GPT versions use a byte pair encoding logic, but GPT-1 is different to the others.
+
+GPT-1 had two types of tokens: a normal and a token at the end of the word (marked with `</w>`). Contrary, GPT-2 and GPT-3 have tokens containing an initial space.
+
+GPT-1 used 40,000 merges, and 2 * 238 characters (normal and end-of-word variant), plus an `<unk>` (unknown) token.
+
+GPT-2 and GPT-3 use 50,000 merges and 256 characters, plus an `end-of-text` token.
+
+Because of these differences only the GPT-2 tokenizer is implemented so far.
 
 
 ## History ##
@@ -111,7 +143,7 @@ Instead of the originally proposed sinusoid position embedding it uses a trained
 - Alec Radford, Jeffrey Wu, Rewon Child, David Luan, Dario Amodei, Ilya Sutskever
 - https://openai.com/blog/better-language-models/
 - https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf
-- Source code: https://github.com/openai/ai.demo.gpt-2
+- Source code: https://github.com/openai/ai.demo.util-2
 
 GPT-2 has four variants: The smallest has the same size as the GPT-1 (12 decoders, 12 heads), the largest (XL) has 48 decoders and 25 heads.
 
@@ -132,26 +164,15 @@ Proposal for a more efficient but still good performing sparse solution, where e
 
 ### GPT-3 ###
 
-(This isn't implemented here.)
-
 - Language Models are Few-Shot Learners (2020, OpenAI)
 - Tom B. Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared Kaplan, Prafulla Dhariwal, Arvind Neelakantan, Pranav Shyam, Girish Sastry, Amanda Askell, Sandhini Agarwal, Ariel Herbert-Voss, Gretchen Krueger, Tom Henighan, Rewon Child, Aditya Ramesh, Daniel M. Ziegler, Jeffrey Wu, Clemens Winter, Christopher Hesse, Mark Chen, Eric Sigler, Mateusz Litwin, Scott Gray, Benjamin Chess, Jack Clark, Christopher Berner, Sam McCandlish, Alec Radford, Ilya Sutskever, Dario Amodei
 - https://arxiv.org/abs/2005.14165
 - https://arxiv.org/pdf/2005.14165v4.pdf
 - https://paperswithcode.com/paper/language-models-are-few-shot-learners/review/
-- Source code (not complete): https://github.com/openai/ai.demo.gpt-3
+- Source code (not complete): https://github.com/openai/ai.demo.util-3
 
-Almost exactly the same architecture as GPT-2, but in different sizes, and some decoders use sparse attention. (The original attention called `global`, the new solution is `local`.) It is a very simple change: only the most recent tokens are used by the attention mechanism (last 128), the older tokens are dropped from the calculation.
-
-### Tokenizer ###
-
-All GPT versions use a byte pair encoding logic, but GPT-1 is different to the others.
-
-GPT-1 had two types of tokens: a normal and a token at the end of the word (marked with `</w>`). Contrary, GPT-2 and GPT-3 have tokens containing an initial space.
-
-GPT-1 used 40,000 merges, and 2 * 238 characters (normal and end-of-word variant), plus an `<unk>` (unknown) token.
-
-GPT-2 and GPT-3 use 50,000 merges and 256 characters, plus an `end-of-text` token.
+Almost exactly the same architecture as GPT-2, but in different sizes, and some decoders use sparse attention. (The original attention called `global`, the new solution is `local`.)
+It is a very simple change: only the most recent tokens are used by the attention mechanism (last 256), the older tokens are dropped from the calculation.
 
 
 ## Read more ##

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>demo-gpt-app</artifactId>
+    <parent>
+        <groupId>ai.demo.gpt</groupId>
+        <artifactId>bom</artifactId>
+        <version>1.0</version>
+        <relativePath>../bom</relativePath>
+    </parent>
+
+    <packaging>jar</packaging>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>ai.demo.gpt.App</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <finalName>demo-gpt-app</finalName>
+                    <appendAssemblyId>false</appendAssemblyId>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>standard</id>
+            <dependencies>
+                <dependency>
+                    <groupId>ai.demo.gpt</groupId>
+                    <artifactId>demo-gpt-standard-util</artifactId>
+                    <version>1.0</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>nd4j</id>
+            <dependencies>
+                <dependency>
+                    <groupId>ai.demo.gpt</groupId>
+                    <artifactId>demo-gpt-nd4j-util</artifactId>
+                    <version>1.0</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>vector-api</id>
+            <dependencies>
+                <dependency>
+                    <groupId>ai.demo.gpt</groupId>
+                    <artifactId>demo-gpt-vector-api-util</artifactId>
+                    <version>1.0</version>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
+
+</project>

@@ -1,13 +1,13 @@
 package ai.demo.gpt;
 
+import ai.demo.util.Util;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.channels.FileChannel;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ParameterReader
 {
@@ -27,13 +27,19 @@ public class ParameterReader
 
     public float[][] readMatrix(String name, int rows, int cols)
     {
+        return readMatrix(name, rows, cols, false);
+    }
+
+    public float[][] readWeights(String name, int rows, int cols)
+    {
+        return readMatrix(name, rows, cols, true);
+    }
+
+    private float[][] readMatrix(String name, int rows, int cols, boolean isWeight)
+    {
         float[] numbers = read(name, rows * cols);
 
-        if (numbers == null) return null;
-
-        boolean isRowOrganised = isRowOrganised(name);
-
-        return toMatrix(numbers, rows, cols, isRowOrganised);
+        return toMatrix(numbers, rows, cols, isWeight && settings.isWeightsTransposed());
     }
 
     private float[] read(String name, int size)
@@ -72,43 +78,33 @@ public class ParameterReader
         return array;
     }
 
-    private float[][] toMatrix(float[] numbers, int rows, int cols, boolean isRowOrganised)
+    private float[][] toMatrix(float[] numbers, int rows, int cols, boolean isTranspose)
     {
-        if (isRowOrganised)
-        {
-            return Util.splitVector(numbers, rows);
-        }
-        else
+        if (isTranspose)
         {
             float[][] transposed = new float[rows][cols];
 
-            int n = 0;
-            for (int i = 0; i < rows; i++)
+            int row = 0;
+            int col = 0;
+            for (int i = 0; i < numbers.length; i++)
             {
-                for (int j = 0; j < cols; j++)
+                transposed[row][col] = numbers[i];
+
+                row++;
+
+                if (row == rows)
                 {
-                    transposed[i][j] = numbers[n];
-                    n++;
+                    row = 0;
+                    col++;
                 }
             }
 
             return transposed;
         }
-    }
-
-    private boolean isRowOrganised(String name)
-    {
-        for (Map.Entry<String, String> entry : settings.getMatrixOrders().entrySet())
+        else
         {
-            Pattern pattern = Pattern.compile(entry.getKey().replace(".", "\\.").replace("*", ".*"));
-            Matcher matcher = pattern.matcher(name);
-            if (matcher.matches())
-            {
-                return entry.getValue().equalsIgnoreCase("ROW");
-            }
+            return Util.splitVector(numbers, rows);
         }
-
-        return true;
     }
 
     private List<File> findFiles(String name, int size)

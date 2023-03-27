@@ -55,7 +55,7 @@ Optional properties:
 
 ### OpenAI GPT-2 ###
 
-The GPT-2 models were published completely. (Code and trained parameters as well.) You can try all of these using the demo-gpt-java app:
+The GPT-2 models were published completely. (Code and trained parameters as well.) You can try all of these using the demo-gpt app:
 
 | Name         | Hidden size | Dec. no. | Head no. | Max. length | Size of params |                                                                                                    |
 |--------------|------------:|---------:|---------:|------------:|---------------:|----------------------------------------------------------------------------------------------------|

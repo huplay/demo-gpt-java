@@ -1,5 +1,7 @@
 package ai.demo.gpt;
 
+import ai.demo.util.Util;
+
 import java.io.*;
 import java.util.Collections;
 import java.util.List;
@@ -16,7 +18,8 @@ public class App
         OUT.println(" /  _____/\\______   \\__    ___/   __|  /____   _____   ____");
         OUT.println("/   \\  ___ |     ___/ |    |     / __ |/ __ \\ /     \\ /  _ \\");
         OUT.println("\\    \\_\\  \\|    |     |    |    / /_/ \\  ___/|  Y Y  (  <_> )");
-        OUT.println(" \\________/|____|     |____|    \\_____|\\_____>__|_|__/\\____/\n");
+        OUT.println(" \\________/|____|     |____|    \\_____|\\_____>__|_|__/\\____/");
+        OUT.println("Util: " + Util.getUtilName() + "\n");
 
         try
         {

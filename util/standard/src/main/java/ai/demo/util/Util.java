@@ -1,9 +1,14 @@
-package ai.demo.gpt;
+package ai.demo.util;
 
 import static java.lang.Math.sqrt;
 
 public class Util
 {
+    public static String getUtilName()
+    {
+        return "Standard";
+    }
+
     /**
      * Vector to vector addition
      */
@@ -50,19 +55,39 @@ public class Util
     }
 
     /**
-     * Multiply vector by matrix
+     * Multiply vector by matrix. The first dimension of the matrix is the column.
      */
+    /*public static float[] multiplyVectorByMatrix(float[] vector, float[][] matrix)
+    {
+        float[] ret = new float[matrix.length];
+
+        for (int i = 0; i < matrix.length; i++)
+        {
+            //ret[i] = dotProduct(vector, matrix[i]);
+
+            float sum = 0;
+            for (int j = 0; j < vector.length; j++)
+            {
+                sum = sum + vector[j] * matrix[j][i];
+            }
+
+            ret[i] = sum;
+        }
+
+        return ret;
+    }*/
+
     public static float[] multiplyVectorByMatrix(float[] vector, float[][] matrix)
     {
-        float[] ret = new float[matrix[0].length];
+        float[] ret = new float[matrix.length];
 
-        for (int col = 0; col < matrix[0].length; col++)
+        for (int col = 0; col < matrix.length; col++)
         {
             float sum = 0;
 
             for (int i = 0; i < vector.length; i++)
             {
-                sum = sum + vector[i] * matrix[i][col];
+                sum = sum + vector[i] * matrix[col][i];
             }
 
             ret[col] = sum;

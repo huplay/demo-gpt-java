@@ -1,5 +1,7 @@
 package ai.demo.gpt;
 
+import ai.demo.util.Util;
+
 import java.util.*;
 import static ai.demo.gpt.App.OUT;
 import static ai.demo.gpt.TransformerUtil.*;
@@ -69,7 +71,7 @@ public class Transformer
         List<Integer> result = new ArrayList<>();
 
         int token = inputTokens.get(intputSize - 1);
-        OUT.print(".");
+        OUT.print(". ");
 
         // Use the transformer again an again to generate new tokens
         for (int pos = intputSize - 1; pos < settings.getLengthLimit() + intputSize; pos++)

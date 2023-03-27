@@ -1,5 +1,7 @@
 package ai.demo.gpt;
 
+import ai.demo.util.Util;
+
 import java.util.ArrayList;
 import java.util.List;
 import static ai.demo.gpt.Settings.*;
@@ -44,19 +46,19 @@ public class TransformerDecoder
         String decoder = "decoder" + (decoderId + 1) + "/";
         int hiddenSize = settings.getHiddenSize();
 
-        this.queryWeights = reader.readMatrix(decoder + "att.query.w", hiddenSize, hiddenSize);
+        this.queryWeights = reader.readWeights(decoder + "att.query.w", hiddenSize, hiddenSize);
         this.queryBiases = reader.readVector(decoder + "att.query.b", hiddenSize);
-        this.keyWeights = reader.readMatrix(decoder + "att.key.w", hiddenSize, hiddenSize);
+        this.keyWeights = reader.readWeights(decoder + "att.key.w", hiddenSize, hiddenSize);
         this.keyBiases = reader.readVector(decoder + "att.key.b", hiddenSize);
-        this.valueWeights = reader.readMatrix(decoder + "att.value.w", hiddenSize, hiddenSize);
+        this.valueWeights = reader.readWeights(decoder + "att.value.w", hiddenSize, hiddenSize);
         this.valueBiases = reader.readVector(decoder + "att.value.b", hiddenSize);
-        this.projectionWeights = reader.readMatrix(decoder + "att.proj.w", hiddenSize, hiddenSize);
+        this.projectionWeights = reader.readWeights(decoder + "att.proj.w", hiddenSize, hiddenSize);
         this.projectionBiases = reader.readVector(decoder + "att.proj.b", hiddenSize);
         this.attNormWeights = reader.readVector(decoder + "att.norm.w", hiddenSize);
         this.attNormBiases = reader.readVector(decoder + "att.norm.b", hiddenSize);
-        this.mlpLayer1Weights = reader.readMatrix(decoder + "mlp.layer1.w", hiddenSize, hiddenSize * 4);
+        this.mlpLayer1Weights = reader.readWeights(decoder + "mlp.layer1.w", hiddenSize * 4, hiddenSize);
         this.mlpLayer1Biases = reader.readVector(decoder + "mlp.layer1.b", hiddenSize * 4);
-        this.mlpLayer2Weights = reader.readMatrix(decoder + "mlp.layer2.w", hiddenSize * 4, hiddenSize);
+        this.mlpLayer2Weights = reader.readWeights(decoder + "mlp.layer2.w", hiddenSize, hiddenSize * 4);
         this.mlpLayer2Biases = reader.readVector(decoder + "mlp.layer2.b", hiddenSize);
         this.mlpNormWeights = reader.readVector(decoder + "mlp.norm.w", hiddenSize);
         this.mlpNormBiases = reader.readVector(decoder + "mlp.norm.b", hiddenSize);

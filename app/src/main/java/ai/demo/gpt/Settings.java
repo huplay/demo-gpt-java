@@ -32,6 +32,7 @@ public class Settings
     public final Map<String, String> matrixOrders = new HashMap<>();
     private final String dataType;
     private final ByteOrder byteOrder;
+    private final boolean isWeightsTransposed;
 
     public Settings(App.Arguments arguments) throws Exception
     {
@@ -87,9 +88,8 @@ public class Settings
         }
 
         this.dataType = properties.get("data.type");
-
-        String byteOrder = properties.get("byte.order");
-        this.byteOrder = "LITTLE_ENDIAN".equalsIgnoreCase(byteOrder) ? LITTLE_ENDIAN : BIG_ENDIAN;
+        this.byteOrder = "LITTLE_ENDIAN".equalsIgnoreCase(properties.get("byte.order")) ? LITTLE_ENDIAN : BIG_ENDIAN;
+        this.isWeightsTransposed = "true".equalsIgnoreCase(properties.get("weights.transposed"));
     }
 
     public static Map<String, String> readProperties(String fileName) throws Exception
@@ -264,11 +264,6 @@ public class Settings
         return fileMappings;
     }
 
-    public Map<String, String> getMatrixOrders()
-    {
-        return matrixOrders;
-    }
-
     public String getDataType()
     {
         return dataType;
@@ -277,5 +272,10 @@ public class Settings
     public ByteOrder getByteOrder()
     {
         return byteOrder;
+    }
+
+    public boolean isWeightsTransposed()
+    {
+        return isWeightsTransposed;
     }
 }

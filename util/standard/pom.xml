@@ -2,19 +2,14 @@
 <project>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>demo-gpt</artifactId>
+    <artifactId>demo-gpt-standard-util</artifactId>
     <parent>
         <groupId>ai.demo.gpt</groupId>
         <artifactId>bom</artifactId>
         <version>1.0</version>
-        <relativePath>bom</relativePath>
+        <relativePath>../../bom</relativePath>
     </parent>
 
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
 
-    <modules>
-        <module>app</module>
-        <module>util</module>
-    </modules>
-    
 </project>
