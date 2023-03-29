@@ -12,7 +12,7 @@ To use this app you have to find the trained parameters. For the GPT-2 models I 
 
 There is a `models` folder where all the ported models have a subfolder with a configuration file. I also added a document (`MODEL.md`) which contains the details how to download that model.
 
-For the details how to port a model see `MODELS.md` under the `models` folder.
+For the details how to port a model see the `README.md` under the `models` folder.
 
 
 ## Install ##
@@ -32,7 +32,7 @@ For the details how to port a model see `MODELS.md` under the `models` folder.
 
    The files should be placed into the `models/<model name>/parameters` folder, so for example using the GPT-2 XL version to `models/GPT-2-XL/parameters`. 
 
-   See the `models/MODELS.md` file how to collect parameters for a particular model.
+   See the `models/README.md` and `models/<model>/MODEL.md/` files how to collect parameters for a particular model.
 
 
 5. Using a command line tool (`cmd`) enter into the main directory:

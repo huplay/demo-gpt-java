@@ -29,21 +29,23 @@ Every model can contain a `setup.bat` file, which is used to configure the neces
 
 ## Format of model.properties ##
 
-- 'tokenizer': Type of tokenizer (Currently only the GPT-2 is supported)
+- `tokenizer`: type of tokenizer (Currently only the GPT-2 is supported)
+- `tokenizer.config`: the config folder of the tokenizer
 - `token.count`: number of tokens
 - `end.of.text.token`: token id for marking the END-OF-TEXT
 - `max.length`: context size, the number of tokens the system can process (limited by the position embedding)
+- `position.embedding`: the type of the position embedding (LEARNED, RoPE)
+- `pre.normalization`: marks that, pre-normalization is used (opposing post-normalization) (true or false)
 - `hidden.size`: the size of the hidden state
 - `decoder.count`: number of decoders
 - `attention.head.count`: number of attention heads
 - `attention.dividend`: dividend at attention scoring (usually the square root of embeddingSize / headCount)
 - `attention.type.n`: attention type for all decoders (global | local | none)
 - `epsilon`: epsilon, used at normalization (mostly 1e-5f)
-- 
-- `data.type`: Data type of the values. (Currently, only FLOAT32 is supported: 4 bytes per value. FLOAT16 would be the another commonly used possibility.)
+- `data.type`: data type of the values. (Currently, only FLOAT32 is supported: 4 bytes per value. FLOAT16 would be the another commonly used possibility.)
 - `byte.order`: BIG_ENDIAN or LITTLE_ENDIAN
 - `matrix.order.<expression>`: how the matrix is stored. ROW or COLUMN first.
-- `file.<standard name>`: File mapping from the standard name. (Use <null> if the specific file is missing. It works only with bias files, the weight are compulsory.)
+- `file.<standard name>`: file mapping from the standard name. (Use <null> if the specific file is missing. It works only with bias files, the weight are compulsory.)
 
 Optional properties:
 - `name`: name of the model
@@ -68,7 +70,9 @@ The GPT-2 models were published completely. (Code and trained parameters as well
 
 `EleutherAI` is attempting to recreate all the GPT-3 variants, training them on their own dataset (`Pile`). (https://www.eleuther.ai)
 
-They are published the following models so far:
+I converted the parameters for the smaller models into my standard format, but optionally you can use the original Pytorch files as well. Here you can find the links for the converted parameters.
+
+EleutherAI created the following models so far:
 
 | Name                               | Hidden size | Dec. no. | Head no. | Max. length | Size of params |                                                                                                             |
 |------------------------------------|------------:|---------:|---------:|------------:|---------------:|-------------------------------------------------------------------------------------------------------------|
@@ -84,7 +88,9 @@ They are published the following models so far:
 
 BLOOM (BigScience Large Open-science Open-access Multilingual Language Model) was created by over a thousand AI developers, organized by Hugging Face, published in May 2022.
 
-It has a larger vocabulary (250,880 tokens) compared to the GPT-2/3 models (50,257), so the size of the word token embedding parameters is bigger. (More parameters as a GPT-2 model with the same architectural size.)
+It has a larger vocabulary (250,880 tokens) compared to the GPT-2/3 models (50,257), so the size of the word token embedding is bigger. (More parameters as a GPT-2 model with the same architectural size.)
+
+These models are not ported yet because the different tokenizer and position embedding, but I'm working on it.
 
 | Name       | Hidden size | Dec. no. | Head no. | Max. length | Size of params |
 |------------|------------:|---------:|---------:|------------:|---------------:|
@@ -99,6 +105,8 @@ It has a larger vocabulary (250,880 tokens) compared to the GPT-2/3 models (50,2
 ### LLaMA (Meta AI) ###
 
 LLaMA (Large Language Model Meta AI) is a large language model announced by Meta (Facebook) in 23 Feb 2023. The trained parameters were shared only to academic researchers, but on 2 March it was leaked to the public.
+
+These models are not ported yet as I don't have all the necessary details, but there's a chance the smaller models could be used somehow.
 
 Vocabulary size is 32,000.
 

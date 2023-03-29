@@ -56,7 +56,7 @@ public class Settings
         tokenCount = getIntProperty(properties, "token.count");
         endOfTextToken = getIntProperty(properties, "end.of.text.token");
         maxLength = getIntProperty(properties, "max.length");
-        positionEncoder = getProperty(properties, "position.encoder");
+        positionEncoder = getProperty(properties, "position.embedding");
         isPreNormalization = "true".equals(getProperty(properties, "pre.normalization"));
         hiddenSize = getIntProperty(properties, "hidden.size");
         decoderCount = getIntProperty(properties, "decoder.count");
