@@ -17,7 +17,7 @@ For the details how to port a model see `MODELS.md` under the `models` folder.
 
 ## Install ##
 
-1. Install Java. For the standard version 1.8 or above. For the Vector API implementation at least Java 20 (faster).
+1. Install Java. For the standard version 1.8 or above. For the Vector API implementation at least Java 18. (Tested only on Java 20).
 
 
 2. Install Maven. (Java compile/build tool) (3.8.6 used during development).
@@ -62,7 +62,7 @@ Execute the application:
 Or on any systems:```java -jar target/demo-gpt-app.jar <model-name>```
 
 If you want to use the Vector API version (in the case you installed that variant) you have to use the ``run2 <model-name>`` command.
-This is necessary because in Java 20 the Vector API isn't ready, added only as an incubator module, so we have to execute the Java Virtual Machine telling we want to use this incubator feature. 
+This is necessary because the Vector API isn't ready (as of Java 20), added only as an incubator module, so we have to execute the Java Virtual Machine telling we want to use this incubator feature. 
   
 Using larger models it is necessary to increase the heap size (memory for Java). The ```run.bat / run2.bat``` handles it automatically, but if the app is called directly you should use the Java -Xmx and Xms flags. 
 
