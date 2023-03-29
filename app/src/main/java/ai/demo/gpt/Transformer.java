@@ -1,5 +1,9 @@
 package ai.demo.gpt;
 
+import ai.demo.gpt.config.ParameterReader;
+import ai.demo.gpt.config.Settings;
+import ai.demo.gpt.position.PositionEmbedder;
+import ai.demo.gpt.tokenizer.Tokenizer;
 import ai.demo.util.Util;
 
 import java.util.*;
@@ -13,8 +17,8 @@ public class Transformer
 {
     private final Settings settings;
     private final Tokenizer tokenizer;
+    private final PositionEmbedder positionEmbedder;
     private final float[][] tokenEmbeddings;
-    private final float[][] positionEmbeddings;
     private final float[] normFinalWeights;
     private final float[] normFinalBiases;
     private final TransformerDecoder[] decoders;
@@ -22,23 +26,23 @@ public class Transformer
     /**
      * Initialization
      */
-    public Transformer(Settings settings, Tokenizer tokenizer, ParameterReader parameterReader)
+    public Transformer(Settings settings, Tokenizer tokenizer, ParameterReader reader, PositionEmbedder positionEmbedder)
     {
         this.settings = settings;
         this.tokenizer = tokenizer;
+        this.positionEmbedder = positionEmbedder;
 
         int hiddenSize = settings.getHiddenSize();
 
-        this.tokenEmbeddings = parameterReader.readMatrix("input/wte", settings.getTokenCount(), hiddenSize);
-        this.positionEmbeddings = parameterReader.readMatrix("input/wpe", settings.getMaxLength(), hiddenSize);
-        this.normFinalWeights = parameterReader.readVector("output/norm.w", hiddenSize);
-        this.normFinalBiases = parameterReader.readVector("output/norm.b", hiddenSize);
+        this.tokenEmbeddings = reader.readMatrix("input/wte", settings.getTokenCount(), hiddenSize);
+        this.normFinalWeights = reader.readVector("output/norm.w", hiddenSize);
+        this.normFinalBiases = reader.readVector("output/norm.b", hiddenSize);
 
         // Create the decoder stack
         this.decoders = new TransformerDecoder[settings.getDecoderCount()];
         for (int i = 0; i < settings.getDecoderCount(); i++)
         {
-            this.decoders[i] = new TransformerDecoder(i, settings, settings.getAttentionType()[i], parameterReader);
+            this.decoders[i] = new TransformerDecoder(i, settings, reader, positionEmbedder);
         }
     }
 
@@ -46,7 +50,7 @@ public class Transformer
      * Transformer token processing logic
      * This method implements the logic how the input tokens and the new and new generated tokens are passed to the transformer
      */
-    public List<Integer> executeAll(List<Integer> inputTokens)
+    public List<Integer> executeAll(List<Integer> inputTokens, int startPos)
     {
         int intputSize = inputTokens.size();
 
@@ -63,7 +67,7 @@ public class Transformer
             for (int pos = 0; pos < intputSize - 1; pos++)
             {
                 OUT.print("."); // Printing a dot to show there is a progress
-                execute(pos, inputTokens.get(pos));
+                execute(pos + startPos, inputTokens.get(pos));
             }
         }
 
@@ -71,20 +75,23 @@ public class Transformer
         List<Integer> result = new ArrayList<>();
 
         int token = inputTokens.get(intputSize - 1);
-        OUT.print(". ");
+        OUT.print(". "); // Printing something to show there is a progress
 
         // Use the transformer again an again to generate new tokens
         for (int pos = intputSize - 1; pos < settings.getLengthLimit() + intputSize; pos++)
         {
             // Add the last input token or the previously generated new token as input
-            float[] output = execute(pos, token);
+            float[] output = execute(pos + startPos, token);
 
             // The output will be the next new token
             token = selectNextToken(output);
             result.add(token);
 
-            // Exit if the END_OF_TEXT token was chosen or the maximum length is reached
-            if (token == settings.getEndOfTextToken() || (intputSize + result.size() >= settings.getMaxLength())) break;
+            // Exit if the END_OF_TEXT token was chosen
+            if (token == settings.getEndOfTextToken()) break;
+
+            // Exit if the maximum length is reached
+            if (intputSize + result.size() + startPos >= settings.getMaxLength()) break;
         }
 
         return result;
@@ -96,7 +103,7 @@ public class Transformer
         float[] hiddenState = tokenEmbeddings[token];
 
         // Position embedding
-        hiddenState = Util.addVectors(hiddenState, positionEmbeddings[pos]);
+        hiddenState = positionEmbedder.addFixedPosition(hiddenState, pos);
 
         // Decoder stack
         for (TransformerDecoder decoder : decoders)

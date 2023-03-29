@@ -1,10 +1,13 @@
 package ai.demo.gpt;
 
+import ai.demo.gpt.config.ParameterReader;
+import ai.demo.gpt.config.Settings;
+import ai.demo.gpt.position.PositionEmbedder;
 import ai.demo.util.Util;
 
 import java.util.ArrayList;
 import java.util.List;
-import static ai.demo.gpt.Settings.*;
+import static ai.demo.gpt.config.Settings.*;
 import static ai.demo.gpt.TransformerUtil.*;
 
 /**
@@ -13,8 +16,12 @@ import static ai.demo.gpt.TransformerUtil.*;
 public class TransformerDecoder
 {
     private final Settings settings;
+    private final PositionEmbedder positionEmbedder;
+    private final boolean isPreNormalization;
+
     private final boolean hasAttention;
     private final int maxAttentionSize;
+
     private final float[][] queryWeights;
     private final float[] queryBiases;
     private final float[][] keyWeights;
@@ -31,15 +38,22 @@ public class TransformerDecoder
     private final float[] mlpLayer2Biases;
     private final float[] mlpNormWeights;
     private final float[] mlpNormBiases;
+
+    private final float epsilon;
+
     private final List<float[][]> storedKeys = new ArrayList<>();
     private final List<float[][]> storedValues = new ArrayList<>();
 
     /**
      * Initialization
      */
-    public TransformerDecoder(int decoderId, Settings settings, String attentionType, ParameterReader reader)
+    public TransformerDecoder(int decoderId, Settings settings, ParameterReader reader, PositionEmbedder positionEmbedder)
     {
         this.settings = settings;
+        this.positionEmbedder = positionEmbedder;
+        this.isPreNormalization = settings.isPreNormalization();
+
+        String attentionType = settings.getAttentionType()[decoderId];
         this.hasAttention = !attentionType.equals(ATTENTION_NONE);
         this.maxAttentionSize = attentionType.equals(ATTENTION_LOCAL) ? settings.getLocalAttentionSize() : Integer.MAX_VALUE;
 
@@ -62,6 +76,8 @@ public class TransformerDecoder
         this.mlpLayer2Biases = reader.readVector(decoder + "mlp.layer2.b", hiddenSize);
         this.mlpNormWeights = reader.readVector(decoder + "mlp.norm.w", hiddenSize);
         this.mlpNormBiases = reader.readVector(decoder + "mlp.norm.b", hiddenSize);
+
+        this.epsilon = settings.getEpsilon();
     }
 
     /**
@@ -78,26 +94,36 @@ public class TransformerDecoder
 
     private float[] attentionBlock(float[] inputHiddenState)
     {
-        // Normalization
-        float[] hiddenState = normalization(inputHiddenState, attNormWeights, attNormBiases, settings.getEpsilon());
+        float[] hiddenState = inputHiddenState;
+
+        // Pre-normalization
+        if (isPreNormalization) hiddenState = normalization(hiddenState, attNormWeights, attNormBiases, epsilon);
 
         // Attention layer
         hiddenState = attention(hiddenState);
 
-        // Add the original input state to the actual (residual connection)
-        return Util.addVectors(hiddenState, inputHiddenState);
+        // Post-normalization
+        if ( ! isPreNormalization) hiddenState = normalization(hiddenState, attNormWeights, attNormBiases, epsilon);
+
+        // Add (residual connection)
+        return Util.addVectors(inputHiddenState, hiddenState);
     }
 
     private float[] neuronBlock(float[] inputHiddenState)
     {
-        // Normalization
-        float[] hiddenState = normalization(inputHiddenState, mlpNormWeights, mlpNormBiases, settings.getEpsilon());
+        float[] hiddenState = inputHiddenState;
+
+        // Pre-normalization
+        if (isPreNormalization) hiddenState = normalization(hiddenState, mlpNormWeights, mlpNormBiases, epsilon);
 
         // Neuron layers
         hiddenState = neuronLayers(hiddenState);
 
-        // Add the original input state to the actual (residual connection)
-        return Util.addVectors(hiddenState, inputHiddenState);
+        // Post-normalization
+        if ( ! isPreNormalization) hiddenState = normalization(hiddenState, mlpNormWeights, mlpNormBiases, epsilon);
+
+        // Add (residual connection)
+        return Util.addVectors(inputHiddenState, hiddenState);
     }
 
     private float[] attention(float[] hiddenState)
@@ -131,12 +157,16 @@ public class TransformerDecoder
         // That is the reason of that we already added the actual key/value to the stored keys/values
         for (int head = 0; head < settings.getHeadCount(); head++)
         {
+            float[] q = positionEmbedder.addRelativePosition(queries[head], storedKeys.size() - 1);
+
             // Calculate the scores
             float[] scores = new float[storedKeys.size()];
             for (int pos = 0; pos < storedKeys.size(); pos++)
             {
+                float[] k = positionEmbedder.addRelativePosition(storedKeys.get(pos)[head], pos);
+
                 // The score is calculated multiplying the "actual" query vector and the "related" key vector
-                scores[pos] = Util.dotProduct(queries[head], storedKeys.get(pos)[head]) / settings.getAttentionDividend();
+                scores[pos] = Util.dotProduct(q, k) / settings.getAttentionDividend();
             }
 
             // Softmax

@@ -1,4 +1,4 @@
-package ai.demo.gpt;
+package ai.demo.gpt.config;
 
 import java.io.*;
 import java.nio.ByteOrder;
@@ -9,17 +9,26 @@ import static ai.demo.gpt.App.OUT;
 import static java.nio.ByteOrder.BIG_ENDIAN;
 import static java.nio.ByteOrder.LITTLE_ENDIAN;
 
+/**
+ * Holder of the configuration stored in the model.properties file
+ */
 public class Settings
 {
     public static final String ATTENTION_GLOBAL = "global";
     public static final String ATTENTION_LOCAL = "local";
     public static final String ATTENTION_NONE = "none";
 
-    private final App.Arguments arguments;
+    private final Arguments arguments;
 
+    private final String tokenizer;
+    private final String tokenizerConfig;
     private final int tokenCount;
     private final int endOfTextToken;
     private final int maxLength;
+
+    private final String positionEncoder;
+    private final boolean isPreNormalization;
+
     private final int hiddenSize;
     private final int decoderCount;
     private final int headCount;
@@ -34,7 +43,7 @@ public class Settings
     private final ByteOrder byteOrder;
     private final boolean isWeightsTransposed;
 
-    public Settings(App.Arguments arguments) throws Exception
+    public Settings(Arguments arguments) throws Exception
     {
         this.arguments = arguments;
 
@@ -42,10 +51,13 @@ public class Settings
         String fileName = arguments.getPath() + "/" + arguments.getName() + "/model.properties";
         Map<String, String> properties = readProperties(fileName);
 
-        // Find the necessary in the collected properties
+        tokenizer = getProperty(properties, "tokenizer");
+        tokenizerConfig = getProperty(properties, "tokenizer.config");
         tokenCount = getIntProperty(properties, "token.count");
         endOfTextToken = getIntProperty(properties, "end.of.text.token");
         maxLength = getIntProperty(properties, "max.length");
+        positionEncoder = getProperty(properties, "position.encoder");
+        isPreNormalization = "true".equals(getProperty(properties, "pre.normalization"));
         hiddenSize = getIntProperty(properties, "hidden.size");
         decoderCount = getIntProperty(properties, "decoder.count");
         headCount = getIntProperty(properties, "attention.head.count");
@@ -194,6 +206,16 @@ public class Settings
         }
     }
 
+    public String getTokenizer()
+    {
+        return tokenizer;
+    }
+
+    public String getTokenizerConfig()
+    {
+        return tokenizerConfig;
+    }
+
     public String getPath()
     {
         return arguments.getPath();
@@ -222,6 +244,16 @@ public class Settings
     public int getMaxLength()
     {
         return maxLength;
+    }
+
+    public String getPositionEncoder()
+    {
+        return positionEncoder;
+    }
+
+    public boolean isPreNormalization()
+    {
+        return isPreNormalization;
     }
 
     public int getHiddenSize()

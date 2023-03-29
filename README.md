@@ -70,8 +70,8 @@ Using larger models it is necessary to increase the heap size (memory for Java).
 ## Additional command line parameters ##
 
 - `path` - Path of the `models` folder (default: `/models`)
-- `maxlength` - Maximum number of generated tokens (default 25)
-- `topk` - Number of possibilities to chose from as next token
+- `max` - Maximum number of generated tokens (default: 25)
+- `topk` - Number of possibilities to chose from as next token (default: 40)
 
 
 ## Usage ##
@@ -83,7 +83,9 @@ The app shows a prompt, where you can provide a text:
 You can leave it empty, or type something, which will be continued by the system. While the input tokens are processed a `.` character is displayed. (One for every token.)
 After that the system prints the generated tokens (one by one). If the maximum length is reached, or the response finished by an `END-OF-TEXT` token, a new prompt will be given.
 
-Normally every prompt starts a completely new session (the state is cleared), but if you want to remain in the same context, start your input text by `//`.
+Normally every prompt starts a completely new session (the state is cleared), but if you want to remain in the same context, start your input text by `+`.
+If you use only a single `x` character, without more content, the system will continue the text as it would do without the limit of the max length.
+If the maximum token amount is reached, no output will be produced (starting the text by`+`). 
 
 To quit press Ctrl + C.
 

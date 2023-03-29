@@ -1,4 +1,4 @@
-package ai.demo.gpt;
+package ai.demo.gpt.config;
 
 import ai.demo.util.Util;
 
@@ -9,6 +9,9 @@ import java.nio.FloatBuffer;
 import java.nio.channels.FileChannel;
 import java.util.*;
 
+/**
+ * Reader of the trained parameters
+ */
 public class ParameterReader
 {
     private final String modelPath;

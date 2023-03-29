@@ -1,8 +1,14 @@
 package ai.demo.gpt;
 
+import ai.demo.gpt.config.Arguments;
+import ai.demo.gpt.config.ParameterReader;
+import ai.demo.gpt.config.Settings;
+import ai.demo.gpt.position.PositionEmbedder;
+import ai.demo.gpt.tokenizer.Tokenizer;
 import ai.demo.util.Util;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -34,10 +40,20 @@ public class App
             OUT.println("Output is selected from the best " + arguments.getTopK() + " tokens (topK)");
 
             OUT.print("\nLoading trained parameters... ");
-            Tokenizer tokenizer = new Tokenizer("GPT-2");
+
+            Tokenizer tokenizer = Tokenizer.getInstance(settings);
+
             ParameterReader parameterReader = new ParameterReader(arguments.getModelPath(), settings);
-            Transformer transformer = new Transformer(settings, tokenizer, parameterReader);
+
+            PositionEmbedder positionEmbedder = PositionEmbedder.getInstance(settings, parameterReader);
+
+            Transformer transformer = new Transformer(settings, tokenizer, parameterReader, positionEmbedder);
+
             OUT.print("Done.");
+
+            // For storing the position and last token for the case the session will be continued using "+" as input
+            int pos = 0;
+            int lastToken = settings.getEndOfTextToken();
 
             while (true)
             {
@@ -46,19 +62,34 @@ public class App
                 BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
                 String input = reader.readLine();
 
-                // If the input starts with "//", the same session will be continued, otherwise delete the stored state
-                if (input != null && input.startsWith("//")) input = input.substring(2);
-                else transformer.clear();
+                List<Integer> inputTokens = new ArrayList<>();
 
-                // Split the input text into tokens
-                List<Integer> inputTokens = tokenizer.encode(input);
+                if (input.startsWith("+"))
+                {
+                    // If the input starts with "+" continue the same session
+                    inputTokens.add(lastToken);
+                    inputTokens.addAll(tokenizer.encode(input.substring(1)));
+                }
+                else
+                {
+                    inputTokens = tokenizer.encode(input);
+
+                    // Clear the transformer's stored values
+                    pos = 0;
+                    lastToken = settings.getEndOfTextToken();
+                    transformer.clear();
+                }
 
                 // Use the Transformer
-                List<Integer> outputTokens = transformer.executeAll(inputTokens);
+                List<Integer> outputTokens = transformer.executeAll(inputTokens, pos);
 
                 // Convert the output to text and print it
                 String response = tokenizer.decode(outputTokens);
                 print(response, outputTokens, tokenizer);
+
+                // Store the position and last token for the case the session will be continued using "+" as input
+                pos += outputTokens.size();
+                lastToken = outputTokens.get(outputTokens.size() - 1);
             }
         }
         catch (Exception e)
@@ -111,7 +142,7 @@ public class App
                     String value = parts[1];
 
                     if (param.equals("path")) path = value;
-                    if (param.equals("maxlength")) maxLength = readInt(value, maxLength);
+                    if (param.equals("max")) maxLength = readInt(value, maxLength);
                     else if (param.equals("topk")) topK = readInt(value, topK);
                 }
                 else OUT.println("\nWARNING: Unrecognisable argument: " + args[i] + "\n");
@@ -133,46 +164,5 @@ public class App
                     + "). Default value will be used.\n");
         }
         return defaultValue;
-    }
-
-    public static class Arguments
-    {
-        private final String name;
-        private final String path;
-        private final int lengthLimit;
-        private final int topK;
-
-        public Arguments(String name, String path, int lengthLimit, int topK)
-        {
-            this.name = name;
-            this.path = path;
-            this.lengthLimit = lengthLimit;
-            this.topK = topK;
-        }
-
-        public String getName()
-        {
-            return name;
-        }
-
-        public String getPath()
-        {
-            return path;
-        }
-
-        public int getLengthLimit()
-        {
-            return lengthLimit;
-        }
-
-        public int getTopK()
-        {
-            return topK;
-        }
-
-        public String getModelPath()
-        {
-            return path + "/" + name;
-        }
     }
 }

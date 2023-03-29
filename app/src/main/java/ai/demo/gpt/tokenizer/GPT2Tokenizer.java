@@ -1,4 +1,6 @@
-package ai.demo.gpt;
+package ai.demo.gpt.tokenizer;
+
+import ai.demo.gpt.config.Settings;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -10,7 +12,7 @@ import java.util.regex.Pattern;
 /**
  * Converting the input text to list of tokens (encode) and the list of tokens to output text (decode)
  */
-public class Tokenizer
+public class GPT2Tokenizer implements Tokenizer
 {
     private static final String TOKENS_FILENAME = "tokens.map";
     private static final String MERGES_FILENAME = "merges.bpe";
@@ -29,7 +31,7 @@ public class Tokenizer
     /**
      * Initialization
      */
-    public Tokenizer(String tokenizerName)
+    public GPT2Tokenizer(String path)
     {
         addCharRange(0, 'Ā', 'Ġ');
         addCharRange(33, '!', '~');
@@ -37,8 +39,6 @@ public class Tokenizer
         addCharRange(161, '¡', '¬');
         addCharRange(173, 'Ń', 'Ń');
         addCharRange(174, '®', 'ÿ');
-
-        String path = "tokenizers/" + tokenizerName;
 
         readTokensFile(path);
         readMergesFile(path);

@@ -96,11 +96,18 @@ public class Util
      */
     public static float[] multiplyVectorByTransposedMatrix(float[] vector, float[][] matrix)
     {
-        float[] ret = new float[matrix[0].length];
+        float[] ret = new float[matrix.length];
 
-        for (int col = 0; col < matrix[0].length; col++)
+        for (int row = 0; row < matrix.length; row++)
         {
-            ret[col] = dotProduct(vector, matrix[col]);
+            float sum = 0;
+
+            for (int i = 0; i < vector.length; i++)
+            {
+                sum = sum + vector[i] * matrix[row][i];
+            }
+
+            ret[row] = sum;
         }
 
         return ret;
