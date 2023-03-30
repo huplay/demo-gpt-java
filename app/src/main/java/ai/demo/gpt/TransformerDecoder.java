@@ -60,12 +60,33 @@ public class TransformerDecoder
         String decoder = "decoder" + (decoderId + 1) + "/";
         int hiddenSize = settings.getHiddenSize();
 
-        this.queryWeights = reader.readWeights(decoder + "att.query.w", hiddenSize, hiddenSize);
-        this.queryBiases = reader.readVector(decoder + "att.query.b", hiddenSize);
-        this.keyWeights = reader.readWeights(decoder + "att.key.w", hiddenSize, hiddenSize);
-        this.keyBiases = reader.readVector(decoder + "att.key.b", hiddenSize);
-        this.valueWeights = reader.readWeights(decoder + "att.value.w", hiddenSize, hiddenSize);
-        this.valueBiases = reader.readVector(decoder + "att.value.b", hiddenSize);
+        if (settings.isQueryKeyValueMerged())
+        {
+            // If the query, key and value matrices stored in the same file we have to split them
+            float[][] qkvWeights = reader.readWeights(decoder + "att.query.key.value.w", hiddenSize * 3, hiddenSize);
+            float[][][] qkvWeightSplit = Util.splitMatrix(qkvWeights, 3);
+
+            float[] qkvBiases = reader.readVector(decoder + "att.query.key.value.b", hiddenSize * 3);
+            float[][] qkvBiasSplit = Util.splitVector(qkvBiases, 3);
+
+            this.queryWeights = qkvWeightSplit[0];
+            this.queryBiases = qkvBiasSplit[0];
+            this.keyWeights = qkvWeightSplit[1];
+            this.keyBiases = qkvBiasSplit[1];
+            this.valueWeights = qkvWeightSplit[2];
+            this.valueBiases = qkvBiasSplit[2];
+        }
+        else
+        {
+            // Read the query, key and value matrices from separate files
+            this.queryWeights = reader.readWeights(decoder + "att.query.w", hiddenSize, hiddenSize);
+            this.queryBiases = reader.readVector(decoder + "att.query.b", hiddenSize);
+            this.keyWeights = reader.readWeights(decoder + "att.key.w", hiddenSize, hiddenSize);
+            this.keyBiases = reader.readVector(decoder + "att.key.b", hiddenSize);
+            this.valueWeights = reader.readWeights(decoder + "att.value.w", hiddenSize, hiddenSize);
+            this.valueBiases = reader.readVector(decoder + "att.value.b", hiddenSize);
+        }
+
         this.projectionWeights = reader.readWeights(decoder + "att.proj.w", hiddenSize, hiddenSize);
         this.projectionBiases = reader.readVector(decoder + "att.proj.b", hiddenSize);
         this.attNormWeights = reader.readVector(decoder + "att.norm.w", hiddenSize);

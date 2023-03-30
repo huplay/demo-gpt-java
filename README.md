@@ -8,11 +8,12 @@ TensorFlow, Pytorch or similar tools are NOT used. The core mathematical utility
 
 ## Trained parameters ##
 
-To use this app you have to find the trained parameters. For the GPT-2 models I stored these in separate repos what you can download. Other models are also ported, but you have to download them from their original repo.
+To use this app you have to find the trained parameters.
+For some models I stored these in separate repos what you can download.
+Other models are also ported, but you have to download them from their original source.
 
-There is a `models` folder where all the ported models have a subfolder with a configuration file. I also added a document (`MODEL.md`) which contains the details how to download that model.
-
-For the details how to port a model see the `README.md` under the `models` folder.
+There is a `models` folder where all the ported models have a subfolder with a configuration file.
+There are `README.md` files in the main `models` folder and within the particular model folder as well, which contains the details how to download the parameters.
 
 
 ## Install ##
@@ -61,10 +62,21 @@ Execute the application:
     
 Or on any systems:```java -jar target/demo-gpt-app.jar <model-name>```
 
-If you want to use the Vector API version (in the case you installed that variant) you have to use the ``run2 <model-name>`` command.
+The models are organized in a folder structure, so somtimes the `model-name` should contain it's path. For example:
+
+`run GPT-1`
+
+`run GPT-2/SMALL`
+
+`run GPT-NEO/SMALL`
+
+`run GPT-NEOX/20B`
+
+
+If you want to use the Vector API version (in the case you installed that variant) you have to use the ``runv <model-name>`` command.
 This is necessary because the Vector API isn't ready (as of Java 20), added only as an incubator module, so we have to execute the Java Virtual Machine telling we want to use this incubator feature. 
   
-Using larger models it is necessary to increase the heap size (memory for Java). The ```run.bat / run2.bat``` handles it automatically, but if the app is called directly you should use the Java -Xmx and Xms flags. 
+Using larger models it is necessary to increase the heap size (memory for Java). The ```run.bat / runv.bat``` handles it automatically, but if the app is called directly you should use the Java -Xmx and Xms flags. 
 
 
 ## Additional command line parameters ##
@@ -73,6 +85,9 @@ Using larger models it is necessary to increase the heap size (memory for Java).
 - `max` - Maximum number of generated tokens (default: 25)
 - `topk` - Number of possibilities to chose from as next token (default: 40)
 
+Example:
+
+`run GPT-2/XL max=1024 topk=100`
 
 ## Usage ##
 
@@ -110,7 +125,7 @@ Because of these differences only the GPT-2 tokenizer is implemented so far.
 ### Transformer ###
 
 - Attention Is All You Need (2017, Google Brain)
-- Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Usykoreit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser, Illia Polosukhin
+- Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Łukasz Kaiser, Illia Polosukhin
 - https://arxiv.org/abs/1706.03762 
 - https://arxiv.org/pdf/1706.03762.pdf
 

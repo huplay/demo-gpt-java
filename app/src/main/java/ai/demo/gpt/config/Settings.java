@@ -42,6 +42,7 @@ public class Settings
     private final String dataType;
     private final ByteOrder byteOrder;
     private final boolean isWeightsTransposed;
+    private final boolean isQueryKeyValueMerged;
 
     public Settings(Arguments arguments) throws Exception
     {
@@ -102,6 +103,7 @@ public class Settings
         this.dataType = properties.get("data.type");
         this.byteOrder = "LITTLE_ENDIAN".equalsIgnoreCase(properties.get("byte.order")) ? LITTLE_ENDIAN : BIG_ENDIAN;
         this.isWeightsTransposed = "true".equalsIgnoreCase(properties.get("weights.transposed"));
+        this.isQueryKeyValueMerged = "true".equalsIgnoreCase(properties.get("merged.qkv"));
     }
 
     public static Map<String, String> readProperties(String fileName) throws Exception
@@ -309,5 +311,10 @@ public class Settings
     public boolean isWeightsTransposed()
     {
         return isWeightsTransposed;
+    }
+
+    public boolean isQueryKeyValueMerged()
+    {
+        return isQueryKeyValueMerged;
     }
 }

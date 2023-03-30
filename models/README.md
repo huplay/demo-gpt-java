@@ -55,7 +55,7 @@ Optional properties:
 
 ## Models ##
 
-### OpenAI GPT-2 ###
+### GPT-2 (OpenAI) ###
 
 The GPT-2 models were published completely. (Code and trained parameters as well.) You can try all of these using the demo-gpt app:
 
@@ -66,7 +66,7 @@ The GPT-2 models were published completely. (Code and trained parameters as well
 | GPT-2 LARGE  |        1280 |       36 |       20 |        1024 |          774 M | [Link](https://github.com/huplay/GPT2-LARGE)                                                       |
 | GPT-2 XL     |        1600 |       48 |       25 |        1024 |        1,558 M | [Link1](https://github.com/huplay/GPT2-XL) <br /> [Link2](https://github.com/huplay/GPT2-XL-part2) |
 
-### EleutherAI GPT ###
+### GPT-NEO/J/NEOX (EleutherAI) ###
 
 `EleutherAI` is attempting to recreate all the GPT-3 variants, training them on their own dataset (`Pile`). (https://www.eleuther.ai)
 
@@ -84,7 +84,7 @@ EleutherAI created the following models so far:
 | GPT-NEOX-20B                       |        6144 |       44 |       64 |        2048 |       20,250 M |                                                                                                             |
 
 
-### BLOOM (Hugging Face) ###
+### BLOOM ###
 
 BLOOM (BigScience Large Open-science Open-access Multilingual Language Model) was created by over a thousand AI developers, organized by Hugging Face, published in May 2022.
 
@@ -118,9 +118,28 @@ Vocabulary size is 32,000.
 | LLaMA-65B |        8192 |       80 |       64 |        2048 |       64,711 M |
 
 
+### Cerebras ###
+
+`Cerebras` released seven models in March 2023, trained on `Pile`. (https://www.cerebras.net/blog/cerebras-gpt-a-family-of-open-compute-efficient-large-language-models)
+
+These are very similar models to the GPT-2/GTP-3 series, using the same tokenizer, same learned position embedding, etc. Unlike GPT-3, using always global attention.
+
+All of these are ported to this app:
+
+| Name          | Hidden size | Dec. no. | Head no. | Max. length | Size of params |
+|---------------|------------:|---------:|---------:|------------:|---------------:|
+| CEREBRAS-111M |         768 |       10 |       12 |        2048 |          111 M |
+| CEREBRAS-256M |        1088 |       14 |       17 |        2048 |          256 M |
+| CEREBRAS-590M |        1536 |       18 |       12 |        2048 |          590 M |
+| CEREBRAS-1.3B |        2048 |       24 |       16 |        2048 |         1316 M |
+| CEREBRAS-2.7B |        2560 |       32 |       32 |        2048 |         2652 M |
+| CEREBRAS-6.7B |        4096 |       32 |       32 |        2048 |         6658 M |
+| CEREBRAS-13B  |        5120 |       40 |       40 |        2048 |              M |
+
+
 ## Unpublished models ##
 
-### OpenAI GPT-3 ###
+### GPT-3 (OpenAI) ###
 
 The GPT-3 algorithm is known (almost identical to GPT-2), this application has implemented it, but the parameters are not published, so you can't use these here:
 
@@ -137,7 +156,7 @@ The GPT-3 algorithm is known (almost identical to GPT-2), this application has i
 | GPT-3 DAVINCI v2 / GPT-3.5 |       12288 |       96 |       96 |        4000 |        174,591 M |
 | GPT-3 DAVINCI v3 / ChatGPT |       12288 |       96 |       96 |        4000 |        174,591 M |
 
-### OpenAI GPT-4 ###
+### GPT-4 (OpenAI) ###
 
 GPT-4 was released in 14 March 2023, but almost all technical details are kept secret. It is known this is a Transformer architecture, and as input it can accept images as well. (The output is purely text.)
 
