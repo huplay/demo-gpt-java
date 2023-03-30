@@ -128,13 +128,13 @@ All of these are ported to this app:
 
 | Name          | Hidden size | Dec. no. | Head no. | Max. length | Size of params |
 |---------------|------------:|---------:|---------:|------------:|---------------:|
-| CEREBRAS-111M |         768 |       10 |       12 |        2048 |          111 M |
-| CEREBRAS-256M |        1088 |       14 |       17 |        2048 |          256 M |
-| CEREBRAS-590M |        1536 |       18 |       12 |        2048 |          590 M |
-| CEREBRAS-1.3B |        2048 |       24 |       16 |        2048 |         1316 M |
-| CEREBRAS-2.7B |        2560 |       32 |       32 |        2048 |         2652 M |
-| CEREBRAS-6.7B |        4096 |       32 |       32 |        2048 |         6658 M |
-| CEREBRAS-13B  |        5120 |       40 |       40 |        2048 |              M |
+| Cerebras-111M |         768 |       10 |       12 |        2048 |          111 M |
+| Cerebras-256M |        1088 |       14 |       17 |        2048 |          256 M |
+| Cerebras-590M |        1536 |       18 |       12 |        2048 |          590 M |
+| Cerebras-1.3B |        2048 |       24 |       16 |        2048 |         1316 M |
+| Cerebras-2.7B |        2560 |       32 |       32 |        2048 |         2652 M |
+| Cerebras-6.7B |        4096 |       32 |       32 |        2048 |         6658 M |
+| Cerebras-13B  |        5120 |       40 |       40 |        2048 |        12853 M |
 
 
 ## Unpublished models ##
