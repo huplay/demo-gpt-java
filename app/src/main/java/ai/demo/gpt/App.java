@@ -35,7 +35,11 @@ public class App
 
             Settings settings = new Settings(arguments);
 
-            OUT.println("Number of parameters: " + Math.round(settings.getParameterSize() / 1000000d) + " M");
+            int hiddenSize = settings.getHiddenSize();
+            int headsCount = settings.getHeadCount();
+            OUT.print("Number of parameters: " + Math.round(settings.getParameterSize() / 1000000d) + " M");
+            OUT.print(" (Hidden size: " + hiddenSize + ", decoders: " + settings.getDecoderCount());
+            OUT.println(", heads: " + headsCount + ", head size: " + (hiddenSize / headsCount) +")");
             OUT.println("Maximum length of generated text: " + arguments.getLengthLimit());
             OUT.println("Output is selected from the best " + arguments.getTopK() + " tokens (topK)");
 
@@ -76,7 +80,6 @@ public class App
 
                     // Clear the transformer's stored values
                     pos = 0;
-                    lastToken = settings.getEndOfTextToken();
                     transformer.clear();
                 }
 
