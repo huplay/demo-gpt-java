@@ -15,102 +15,67 @@ import static ai.demo.gpt.TransformerUtil.*;
  */
 public class TransformerDecoder
 {
+    private final int decoderId;
     private final Settings settings;
+    private final ParameterReader reader;
     private final PositionEmbedder positionEmbedder;
     private final boolean isPreNormalization;
-
+    private final float epsilon;
     private final boolean hasAttention;
     private final int maxAttentionSize;
 
-    private final float[][] queryWeights;
-    private final float[] queryBiases;
-    private final float[][] keyWeights;
-    private final float[] keyBiases;
-    private final float[][] valueWeights;
-    private final float[] valueBiases;
-    private final float[][] projectionWeights;
-    private final float[] projectionBiases;
-    private final float[] attNormWeights;
-    private final float[] attNormBiases;
-    private final float[][] mlpLayer1Weights;
-    private final float[] mlpLayer1Biases;
-    private final float[][] mlpLayer2Weights;
-    private final float[] mlpLayer2Biases;
-    private final float[] mlpNormWeights;
-    private final float[] mlpNormBiases;
-
-    private final float epsilon;
+    private float[][] queryWeights;
+    private float[] queryBiases;
+    private float[][] keyWeights;
+    private float[] keyBiases;
+    private float[][] valueWeights;
+    private float[] valueBiases;
+    private float[][] projectionWeights;
+    private float[] projectionBiases;
+    private float[] attNormWeights;
+    private float[] attNormBiases;
+    private float[][] mlpLayer1Weights;
+    private float[] mlpLayer1Biases;
+    private float[][] mlpLayer2Weights;
+    private float[] mlpLayer2Biases;
+    private float[] mlpNormWeights;
+    private float[] mlpNormBiases;
 
     private final List<float[][]> storedKeys = new ArrayList<>();
     private final List<float[][]> storedValues = new ArrayList<>();
+
+    private boolean isLoaded = false;
 
     /**
      * Initialization
      */
     public TransformerDecoder(int decoderId, Settings settings, ParameterReader reader, PositionEmbedder positionEmbedder)
     {
+        this.decoderId = decoderId;
         this.settings = settings;
+        this.reader = reader;
         this.positionEmbedder = positionEmbedder;
         this.isPreNormalization = settings.isPreNormalization();
+        this.epsilon =settings.getEpsilon();
 
         String attentionType = settings.getAttentionType()[decoderId];
         this.hasAttention = !attentionType.equals(ATTENTION_NONE);
-        this.maxAttentionSize = attentionType.equals(ATTENTION_LOCAL) ? settings.getLocalAttentionSize() : Integer.MAX_VALUE;
-
-        String decoder = "decoder" + (decoderId + 1) + "/";
-        int hiddenSize = settings.getHiddenSize();
-
-        if (settings.isQueryKeyValueMerged())
-        {
-            // If the query, key and value matrices stored in the same file we have to split them
-            float[][] qkvWeights = reader.readWeights(decoder + "att.query.key.value.w", hiddenSize * 3, hiddenSize);
-            float[][][] qkvWeightSplit = Util.splitMatrix(qkvWeights, 3);
-
-            float[] qkvBiases = reader.readVector(decoder + "att.query.key.value.b", hiddenSize * 3);
-            float[][] qkvBiasSplit = Util.splitVector(qkvBiases, 3);
-
-            this.queryWeights = qkvWeightSplit[0];
-            this.queryBiases = qkvBiasSplit[0];
-            this.keyWeights = qkvWeightSplit[1];
-            this.keyBiases = qkvBiasSplit[1];
-            this.valueWeights = qkvWeightSplit[2];
-            this.valueBiases = qkvBiasSplit[2];
-        }
-        else
-        {
-            // Read the query, key and value matrices from separate files
-            this.queryWeights = reader.readWeights(decoder + "att.query.w", hiddenSize, hiddenSize);
-            this.queryBiases = reader.readVector(decoder + "att.query.b", hiddenSize);
-            this.keyWeights = reader.readWeights(decoder + "att.key.w", hiddenSize, hiddenSize);
-            this.keyBiases = reader.readVector(decoder + "att.key.b", hiddenSize);
-            this.valueWeights = reader.readWeights(decoder + "att.value.w", hiddenSize, hiddenSize);
-            this.valueBiases = reader.readVector(decoder + "att.value.b", hiddenSize);
-        }
-
-        this.projectionWeights = reader.readWeights(decoder + "att.proj.w", hiddenSize, hiddenSize);
-        this.projectionBiases = reader.readVector(decoder + "att.proj.b", hiddenSize);
-        this.attNormWeights = reader.readVector(decoder + "att.norm.w", hiddenSize);
-        this.attNormBiases = reader.readVector(decoder + "att.norm.b", hiddenSize);
-        this.mlpLayer1Weights = reader.readWeights(decoder + "mlp.layer1.w", hiddenSize * 4, hiddenSize);
-        this.mlpLayer1Biases = reader.readVector(decoder + "mlp.layer1.b", hiddenSize * 4);
-        this.mlpLayer2Weights = reader.readWeights(decoder + "mlp.layer2.w", hiddenSize, hiddenSize * 4);
-        this.mlpLayer2Biases = reader.readVector(decoder + "mlp.layer2.b", hiddenSize);
-        this.mlpNormWeights = reader.readVector(decoder + "mlp.norm.w", hiddenSize);
-        this.mlpNormBiases = reader.readVector(decoder + "mlp.norm.b", hiddenSize);
-
-        this.epsilon = settings.getEpsilon();
+        this.maxAttentionSize = attentionType.equals(ATTENTION_LOCAL)?settings.getLocalAttentionSize():Integer.MAX_VALUE;
     }
 
-    /**
-     * Decoder logic
-     */
     public float[] execute(float[] hiddenState)
     {
+        init();
+
         // Attention block
         if (hasAttention) hiddenState = attentionBlock(hiddenState);
 
         // Neuron layers
-        return neuronBlock(hiddenState);
+        hiddenState = neuronBlock(hiddenState);
+
+        clean();
+
+        return hiddenState;
     }
 
     private float[] attentionBlock(float[] inputHiddenState)
@@ -219,6 +184,80 @@ public class TransformerDecoder
 
         // Layer 2: <hiddenSize> neurons (without activation function)
         return applyWeight(hiddenState, mlpLayer2Weights, mlpLayer2Biases);
+    }
+
+    private void init()
+    {
+        if ( ! isLoaded)
+        {
+            String decoder = "decoder" + (decoderId + 1) + "/";
+            int hiddenSize = settings.getHiddenSize();
+
+            if(settings.isQueryKeyValueMerged())
+            {
+                // If the query, key and value matrices stored in the same file we have to split them
+                float[][] qkvWeights = reader.readWeights(decoder + "att.query.key.value.w", hiddenSize * 3, hiddenSize);
+                float[][][] qkvWeightSplit = Util.splitMatrix(qkvWeights, 3);
+
+                float[] qkvBiases = reader.readVector(decoder + "att.query.key.value.b", hiddenSize * 3);
+                float[][] qkvBiasSplit = Util.splitVector(qkvBiases, 3);
+
+                this.queryWeights = qkvWeightSplit[0];
+                this.queryBiases = qkvBiasSplit[0];
+                this.keyWeights = qkvWeightSplit[1];
+                this.keyBiases = qkvBiasSplit[1];
+                this.valueWeights = qkvWeightSplit[2];
+                this.valueBiases = qkvBiasSplit[2];
+            }
+            else
+            {
+                // Read the query, key and value matrices from separate files
+                this.queryWeights = reader.readWeights(decoder + "att.query.w", hiddenSize, hiddenSize);
+                this.queryBiases = reader.readVector(decoder + "att.query.b", hiddenSize);
+                this.keyWeights = reader.readWeights(decoder + "att.key.w", hiddenSize, hiddenSize);
+                this.keyBiases = reader.readVector(decoder + "att.key.b", hiddenSize);
+                this.valueWeights = reader.readWeights(decoder + "att.value.w", hiddenSize, hiddenSize);
+                this.valueBiases = reader.readVector(decoder + "att.value.b", hiddenSize);
+            }
+
+            this.projectionWeights = reader.readWeights(decoder +"att.proj.w",hiddenSize,hiddenSize);
+            this.projectionBiases = reader.readVector(decoder +"att.proj.b",hiddenSize);
+            this.attNormWeights = reader.readVector(decoder +"att.norm.w",hiddenSize);
+            this.attNormBiases = reader.readVector(decoder +"att.norm.b",hiddenSize);
+            this.mlpLayer1Weights = reader.readWeights(decoder +"mlp.layer1.w",hiddenSize *4,hiddenSize);
+            this.mlpLayer1Biases = reader.readVector(decoder +"mlp.layer1.b",hiddenSize *4);
+            this.mlpLayer2Weights = reader.readWeights(decoder +"mlp.layer2.w",hiddenSize,hiddenSize *4);
+            this.mlpLayer2Biases = reader.readVector(decoder +"mlp.layer2.b",hiddenSize);
+            this.mlpNormWeights = reader.readVector(decoder +"mlp.norm.w",hiddenSize);
+            this.mlpNormBiases = reader.readVector(decoder +"mlp.norm.b",hiddenSize);
+
+            isLoaded = true;
+        }
+    }
+
+    private void clean()
+    {
+        if (settings.isCleanDecoder(decoderId))
+        {
+            isLoaded = false;
+
+            this.queryWeights = null;
+            this.queryBiases = null;
+            this.keyWeights = null;
+            this.keyBiases = null;
+            this.valueWeights = null;
+            this.valueBiases = null;
+            this.projectionWeights = null;
+            this.projectionBiases = null;
+            this.attNormWeights = null;
+            this.attNormBiases = null;
+            this.mlpLayer1Weights = null;
+            this.mlpLayer1Biases = null;
+            this.mlpLayer2Weights = null;
+            this.mlpLayer2Biases = null;
+            this.mlpNormWeights = null;
+            this.mlpNormBiases = null;
+        }
     }
 
     /**

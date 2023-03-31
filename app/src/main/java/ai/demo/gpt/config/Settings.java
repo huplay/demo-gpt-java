@@ -32,7 +32,7 @@ public class Settings
     private final int hiddenSize;
     private final int decoderCount;
     private final int headCount;
-    private final int attentionDividend;
+    private final float attentionDividend;
     private final String[] attentionType;
     private final float epsilon;
     private final int localAttentionSize;
@@ -43,6 +43,8 @@ public class Settings
     private final ByteOrder byteOrder;
     private final boolean isWeightsTransposed;
     private final boolean isQueryKeyValueMerged;
+
+    private final Map<Integer, Boolean> isCleanDecoder = new HashMap<>();
 
     public Settings(Arguments arguments) throws Exception
     {
@@ -62,7 +64,7 @@ public class Settings
         hiddenSize = getIntProperty(properties, "hidden.size");
         decoderCount = getIntProperty(properties, "decoder.count");
         headCount = getIntProperty(properties, "attention.head.count");
-        attentionDividend = getIntProperty(properties, "attention.dividend");
+        attentionDividend = getFloatProperty(properties, "attention.dividend");
         epsilon = getFloatProperty(properties, "epsilon");
 
         boolean isLocalUsed = false;
@@ -104,6 +106,14 @@ public class Settings
         this.byteOrder = "LITTLE_ENDIAN".equalsIgnoreCase(properties.get("byte.order")) ? LITTLE_ENDIAN : BIG_ENDIAN;
         this.isWeightsTransposed = "true".equalsIgnoreCase(properties.get("weights.transposed"));
         this.isQueryKeyValueMerged = "true".equalsIgnoreCase(properties.get("merged.qkv"));
+
+        for (int i = 0; i < decoderCount; i++)
+        {
+            if (properties.get("clean.decoder." + (i + 1)) != null)
+            {
+                isCleanDecoder.put((i + 1), true);
+            }
+        }
     }
 
     public static Map<String, String> readProperties(String fileName) throws Exception
@@ -273,7 +283,7 @@ public class Settings
         return headCount;
     }
 
-    public int getAttentionDividend()
+    public float getAttentionDividend()
     {
         return attentionDividend;
     }
@@ -316,5 +326,10 @@ public class Settings
     public boolean isQueryKeyValueMerged()
     {
         return isQueryKeyValueMerged;
+    }
+
+    public boolean isCleanDecoder(int decoderId)
+    {
+        return isCleanDecoder.get(decoderId) != null;
     }
 }

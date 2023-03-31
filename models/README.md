@@ -39,7 +39,7 @@ Every model can contain a `setup.bat` file, which is used to configure the neces
 - `hidden.size`: the size of the hidden state
 - `decoder.count`: number of decoders
 - `attention.head.count`: number of attention heads
-- `attention.dividend`: dividend at attention scoring (usually the square root of hidden size / head count)
+- `attention.dividend`: dividend at attention scoring - usually the square root of head size (hidden size / head count)
 - `attention.type.n`: attention type for all decoders (global | local | none)
 - `epsilon`: epsilon, used at normalization (mostly 1e-5f)
 - `data.type`: data type of the values. (Currently, only FLOAT32 is supported: 4 bytes per value. FLOAT16 would be the another commonly used possibility.)
@@ -51,7 +51,8 @@ Optional properties:
 - `name`: name of the model
 - `source`: original creator of the model
 - `attention.local.size`: local attention size (necessary only if local attention type is used)
- 
+- `clean.decoder.<n>`: with value `true` at the `<n>`th decoder the loaded parameters will be dropped after processing a token and reloaded again at the next.
+This slows down the process, but saves memory, so in theory you will be able to try larger models.   
 
 ## Models ##
 
