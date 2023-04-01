@@ -1,7 +1,5 @@
 package ai.demo.gpt.tokenizer;
 
-import ai.demo.gpt.config.Settings;
-
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
