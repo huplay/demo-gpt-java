@@ -16,8 +16,8 @@ public interface Tokenizer
 
         switch (settings.getTokenizer())
         {
-            case "gpt-1": return new GPT1Tokenizer(path);
-            case "gpt-2": return new GPT2Tokenizer(path);
+            case "GPT-1": return new GPT1Tokenizer(path);
+            case "GPT-2": return new GPT2Tokenizer(path);
         }
 
         throw new RuntimeException("Unknown tokenizer: " + settings.getTokenizer());

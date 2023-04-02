@@ -1,8 +1,5 @@
 package ai.demo.gpt.tokenizer;
 
-import ai.demo.gpt.config.Settings;
-
-import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -14,23 +11,17 @@ import java.util.regex.Pattern;
  */
 public class GPT2Tokenizer implements Tokenizer
 {
-    private static final String TOKENS_FILENAME = "tokens.map";
-    private static final String MERGES_FILENAME = "merges.bpe";
-
     private final Map<Character, Byte> charEncoding = new HashMap<>(256);
     private final Map<Integer, Character> charDecoding = new HashMap<>(256);
 
     private final Map<String, Integer> tokenEncoding = new HashMap<>(50257);
     private final Map<Integer, String> tokenDecoding = new HashMap<>(50257);
 
-    private final Map<Pair, Integer> merges = new HashMap<>(50000); // bpe_ranks
+    private final Map<Pair, Integer> merges;
 
     private final Pattern pattern =
             Pattern.compile("'s|'t|'re|'ve|'m|'ll|'d| ?\\p{L}+| ?\\p{N}+| ?[^\\s\\p{L}\\p{N}]+|\\s+(?!\\S)|\\s+");
 
-    /**
-     * Initialization
-     */
     public GPT2Tokenizer(String path)
     {
         addCharRange(0, 'Ā', 'Ġ');
@@ -40,8 +31,8 @@ public class GPT2Tokenizer implements Tokenizer
         addCharRange(173, 'Ń', 'Ń');
         addCharRange(174, '®', 'ÿ');
 
-        readTokensFile(path);
-        readMergesFile(path);
+        FileReader.readTokensFile(path + "/encoder.json", tokenEncoding, tokenDecoding);
+        merges = FileReader.readMergesFile(path + "/vocab.bpe", true);
     }
 
     private void addCharRange(int pos, char firstChar, char lastChar)
@@ -51,84 +42,6 @@ public class GPT2Tokenizer implements Tokenizer
             charEncoding.put((char) i, (byte)pos);
             charDecoding.put(pos, (char) i);
             pos++;
-        }
-    }
-
-    /**
-     * Read the "tokens.map" file
-     */
-    private void readTokensFile(String path)
-    {
-        String fileName = path + "/" + TOKENS_FILENAME;
-        try (Scanner scanner = new Scanner(new File(fileName)))
-        {
-            while (scanner.hasNext())
-            {
-                String first = scanner.next();
-
-                if (first.startsWith("\"")) first = first.substring(1);
-                if (first.endsWith(":")) first = first.substring(0, first.length() - 1);
-                if (first.endsWith("\"")) first = first.substring(0, first.length() - 1);
-
-                first = first.replace("\\\"", "\"");
-                first = first.replace("\\'", "'");
-                first = first.replace("\\\\", "\\");
-
-                while (true)
-                {
-                    int i = first.indexOf("\\u");
-                    if (i == -1) break;
-
-                    String hex = first.substring(i + 2, i + 6);
-                    first = first.replace("\\u" + hex, "" + (char)Integer.parseInt(hex, 16));
-                }
-
-                String second = scanner.next();
-
-                if (second.endsWith(",")) second = second.substring(0, second.length() - 1);
-
-                int value = Integer.parseInt(second);
-
-                tokenDecoding.put(value, first);
-                tokenEncoding.put(first, value);
-            }
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Read the "merges.bpe" file
-     */
-    private void readMergesFile(String path)
-    {
-        try
-        {
-            String fileName = path + "/" + MERGES_FILENAME;
-            File file = new File(fileName);
-            FileInputStream inputStream = new FileInputStream(file);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-
-            int i = 0;
-            while (true)
-            {
-                String line = reader.readLine();
-
-                if (line == null) break;
-
-                String[] pairs = line.split(" ");
-                merges.put(new Pair(pairs[0], pairs[1]), i);
-
-                i++;
-            }
-
-            reader.close();
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
         }
     }
 
@@ -208,11 +121,11 @@ public class GPT2Tokenizer implements Tokenizer
             word.add(String.valueOf(c));
         }
 
-        List<Pair> pairs = getPairs(word);
+        List<Pair> pairs = Pair.getPairs(word);
 
         while (true)
         {
-            Pair pair = findFirstPair(pairs);
+            Pair pair = Pair.findFirstPair(pairs, merges);
             if (pair == null) break;
 
             List<String> newWord = new ArrayList<>();
@@ -220,7 +133,7 @@ public class GPT2Tokenizer implements Tokenizer
             int i = 0;
             while (i < word.size())
             {
-                int j = findFromIndex(word, pair.left, i);
+                int j = findFromIndex(word, pair.getLeft(), i);
 
                 if (j != -1)
                 {
@@ -233,9 +146,9 @@ public class GPT2Tokenizer implements Tokenizer
                     break;
                 }
 
-                if (word.get(i).equals(pair.left) && i < word.size() - 1 && word.get(i + 1).equals(pair.right))
+                if (word.get(i).equals(pair.getLeft()) && i < word.size() - 1 && word.get(i + 1).equals(pair.getRight()))
                 {
-                    newWord.add(pair.left + pair.right);
+                    newWord.add(pair.getLeft() + pair.getRight());
                     i = i + 2;
                 }
                 else
@@ -253,29 +166,11 @@ public class GPT2Tokenizer implements Tokenizer
             }
             else
             {
-                pairs = getPairs(word);
+                pairs = Pair.getPairs(word);
             }
         }
 
         return String.join(" ", word);
-    }
-
-    /**
-     * Split a text into merge pairs
-     */
-    private List<Pair> getPairs(List<String> word)
-    {
-        List<Pair> pairs = new ArrayList<>();
-
-        String prev = word.get(0);
-
-        for (String character : word.subList(1, word.size()))
-        {
-            pairs.add(new Pair(prev, character));
-            prev = character;
-        }
-
-        return pairs;
     }
 
     /**
@@ -289,57 +184,5 @@ public class GPT2Tokenizer implements Tokenizer
         }
 
         return -1;
-    }
-
-    /**
-     * Find a pair in the merges
-     */
-    public Pair findFirstPair(List<Pair> pairs)
-    {
-        int min = Integer.MAX_VALUE;
-        Pair minPair = null;
-
-        for (Pair pair : pairs)
-        {
-            Integer value = merges.get(pair);
-
-            if (value != null && value.compareTo(min) < 0)
-            {
-                min = value;
-                minPair = pair;
-            }
-        }
-
-        return minPair;
-    }
-
-    /**
-     * Holder of two string values (pair)
-     */
-    private static class Pair
-    {
-        public final String left;
-        public final String right;
-
-        public Pair(String left, String right)
-        {
-            this.left = left;
-            this.right = right;
-        }
-
-        @Override
-        public boolean equals(Object o)
-        {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Pair pair = (Pair) o;
-            return Objects.equals(left, pair.left) && Objects.equals(right, pair.right);
-        }
-
-        @Override
-        public int hashCode()
-        {
-            return Objects.hash(left, right);
-        }
     }
 }

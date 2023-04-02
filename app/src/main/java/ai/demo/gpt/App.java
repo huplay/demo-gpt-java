@@ -164,7 +164,7 @@ public class App
                 String[] parts = args[i].split("=");
                 if (parts.length == 2)
                 {
-                    String param = parts[0].toLowerCase();
+                    String param = parts[0];
                     String value = parts[1];
 
                     if (param.equals("path")) path = value;

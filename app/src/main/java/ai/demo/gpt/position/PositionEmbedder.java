@@ -13,10 +13,10 @@ public interface PositionEmbedder
     {
         switch (settings.getPositionEncoder())
         {
-            case "learned": return new LearnedPositionEmbedder(settings, parameterReader);
-            case "rope": return new RotaryPositionEmbedder(settings, parameterReader);
+            case "LEARNED": return new LearnedPositionEmbedder(settings, parameterReader);
+            case "RoPE": return new RotaryPositionEmbedder(settings, parameterReader);
         }
 
-        throw new RuntimeException("Unknown tokenizer: " + settings.getTokenizer());
+        throw new RuntimeException("Unknown position embedding: " + settings.getTokenizer());
     }
 }

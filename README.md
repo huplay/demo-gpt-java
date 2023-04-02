@@ -160,12 +160,12 @@ Instead of the originally proposed sinusoid position embedding it uses a trained
 - Alec Radford, Jeffrey Wu, Rewon Child, David Luan, Dario Amodei, Ilya Sutskever
 - https://openai.com/blog/better-language-models/
 - https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf
-- Source code: https://github.com/openai/ai.demo.util-2
+- Source code: https://github.com/openai/gpt-2
 
 GPT-2 has four variants: The smallest has the same size as the GPT-1 (12 decoders, 12 heads), the largest (XL) has 48 decoders and 25 heads.
 
 The only architectural change to the GPT-1 is that the normalization within the decoders are moved before the attention and feed forward layers, and a final normalization is added after the last decoder.
-(Instead of att/norm/add/mlp/norm/add it uses norm/att/add/norm/mlp/add steps.)
+(Instead of att/add/norm/mlp/add/norm it uses norm/att/add/norm/mlp/add steps.)
 
 ### Sparse Transformer ###
 

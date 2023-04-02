@@ -68,7 +68,10 @@ public class TransformerDecoder
         init();
 
         // Attention block
-        if (hasAttention) hiddenState = attentionBlock(hiddenState);
+        if (hasAttention)
+        {
+            hiddenState = attentionBlock(hiddenState);
+        }
 
         // Neuron layers
         hiddenState = neuronBlock(hiddenState);
@@ -80,36 +83,42 @@ public class TransformerDecoder
 
     private float[] attentionBlock(float[] inputHiddenState)
     {
-        float[] hiddenState = inputHiddenState;
+        if (settings.isPreNormalization())
+        {
+            float[] hiddenState = normalization(inputHiddenState, attNormWeights, attNormBiases, epsilon);
 
-        // Pre-normalization
-        if (isPreNormalization) hiddenState = normalization(hiddenState, attNormWeights, attNormBiases, epsilon);
+            hiddenState = attention(hiddenState);
 
-        // Attention layer
-        hiddenState = attention(hiddenState);
+            return Util.addVectors(inputHiddenState, hiddenState);
+        }
+        else
+        {
+            float[] hiddenState = attention(inputHiddenState);
 
-        // Post-normalization
-        if ( ! isPreNormalization) hiddenState = normalization(hiddenState, attNormWeights, attNormBiases, epsilon);
+            hiddenState = Util.addVectors(inputHiddenState, hiddenState);
 
-        // Add (residual connection)
-        return Util.addVectors(inputHiddenState, hiddenState);
+            return normalization(hiddenState, attNormWeights, attNormBiases, epsilon);
+        }
     }
 
     private float[] neuronBlock(float[] inputHiddenState)
     {
-        float[] hiddenState = inputHiddenState;
+        if (settings.isPreNormalization())
+        {
+            float[] hiddenState = normalization(inputHiddenState, mlpNormWeights, mlpNormBiases, epsilon);
 
-        // Pre-normalization
-        if (isPreNormalization) hiddenState = normalization(hiddenState, mlpNormWeights, mlpNormBiases, epsilon);
+            hiddenState = neuronLayers(hiddenState);
 
-        // Neuron layers
-        hiddenState = neuronLayers(hiddenState);
+            return Util.addVectors(inputHiddenState, hiddenState);
+        }
+        else
+        {
+            float[] hiddenState = neuronLayers(inputHiddenState);
 
-        // Post-normalization
-        if ( ! isPreNormalization) hiddenState = normalization(hiddenState, mlpNormWeights, mlpNormBiases, epsilon);
+            hiddenState = Util.addVectors(inputHiddenState, hiddenState);
 
-        // Add (residual connection)
-        return Util.addVectors(inputHiddenState, hiddenState);
+            return normalization(hiddenState, mlpNormWeights, mlpNormBiases, epsilon);
+        }
     }
 
     private float[] attention(float[] hiddenState)

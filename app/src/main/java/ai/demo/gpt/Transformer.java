@@ -33,10 +33,9 @@ public class Transformer
         this.positionEmbedder = positionEmbedder;
 
         int hiddenSize = settings.getHiddenSize();
-
         this.tokenEmbeddings = reader.readMatrix("input/wte", settings.getTokenCount(), hiddenSize);
-        this.normFinalWeights = reader.readVector("output/norm.w", hiddenSize);
-        this.normFinalBiases = reader.readVector("output/norm.b", hiddenSize);
+        this.normFinalWeights = settings.isPreNormalization() ? reader.readVector("output/norm.w", hiddenSize) : null;
+        this.normFinalBiases = settings.isPreNormalization() ? reader.readVector("output/norm.b", hiddenSize): null;
 
         // Create the decoder stack
         this.decoders = new TransformerDecoder[settings.getDecoderCount()];
@@ -112,7 +111,12 @@ public class Transformer
         }
 
         // Final normalization
-        return normalization(hiddenState, normFinalWeights, normFinalBiases, settings.getEpsilon());
+        if (settings.isPreNormalization())
+        {
+            hiddenState = normalization(hiddenState, normFinalWeights, normFinalBiases, settings.getEpsilon());
+        }
+
+        return hiddenState;
     }
 
     private int selectNextToken(float[] output)

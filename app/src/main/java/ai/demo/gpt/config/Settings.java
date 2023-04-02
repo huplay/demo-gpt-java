@@ -130,7 +130,7 @@ public class Settings
                     String[] parts = line.split("=");
                     if (parts.length == 2)
                     {
-                        properties.put(parts[0].toLowerCase().trim(), parts[1].toLowerCase().trim());
+                        properties.put(parts[0].trim(), parts[1].trim());
                     }
                     else
                     {
