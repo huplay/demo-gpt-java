@@ -19,30 +19,7 @@ public class App
     public static void main(String... args) throws Exception
     {
         OUT = new PrintStream(System.out, true, "utf-8");
-/*
-        int n = 0;
-        for (int i = 24; i <= 40; i++)
-        {
-            int x = n * 14;
 
-            OUT.println("file.decoder" + i + "/att.norm.w = " + (x + 2));
-            OUT.println("file.decoder" + i + "/att.norm.b = " + (x + 3));
-            OUT.println("file.decoder" + i + "/att.query.key.value.w = " + (x + 6));
-            OUT.println("file.decoder" + i + "/att.query.key.value.b = " + (x + 7));
-            OUT.println("file.decoder" + i + "/att.proj.w = " + (x + 8));
-            OUT.println("file.decoder" + i + "/att.proj.b = " + (x + 9));
-            OUT.println("file.decoder" + i + "/mlp.norm.w = " + (x + 10));
-            OUT.println("file.decoder" + i + "/mlp.norm.b = " + (x + 11));
-            OUT.println("file.decoder" + i + "/mlp.layer1.w = " + (x + 12));
-            OUT.println("file.decoder" + i + "/mlp.layer1.b = " + (x + 13));
-            OUT.println("file.decoder" + i + "/mlp.layer2.w = " + (x + 14));
-            OUT.println("file.decoder" + i + "/mlp.layer2.b = " + (x + 15));
-            OUT.println();
-            n++;
-        }
-
-        System.exit(0);
-*/
         OUT.println("  _____________________________      ___");
         OUT.println(" /  _____/\\______   \\__    ___/   __|  /____   _____   ____");
         OUT.println("/   \\  ___ |     ___/ |    |     / __ |/ __ \\ /     \\ /  _ \\");
