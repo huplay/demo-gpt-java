@@ -19,89 +19,82 @@ public class App
     public static void main(String... args) throws Exception
     {
         OUT = new PrintStream(System.out, true, "utf-8");
+        new App().start(args);
+    }
 
+    private void start(String... args) throws Exception
+    {
+        logo();
+
+        Arguments arguments = readArguments(args);
+        Settings settings = new Settings(arguments);
+
+        OUT.println("Model: " + arguments.getPath() + "/" + arguments.getName());
+        OUT.print("\nLoading parameters... ");
+
+        Tokenizer tokenizer = Tokenizer.getInstance(settings);
+        ParameterReader parameterReader = new ParameterReader(arguments.getModelPath(), settings);
+        PositionEmbedder positionEmbedder = PositionEmbedder.getInstance(settings, parameterReader);
+        Transformer transformer = new Transformer(settings, tokenizer, parameterReader, positionEmbedder);
+
+        OUT.print("Done.");
+
+        int pos = 0;
+        int lastToken = settings.getEndOfTextToken();
+
+        while (true)
+        {
+            // Read the input text
+            String inputText = input("Input text");
+
+            List<Integer> inputTokens = new ArrayList<>();
+
+            // If the input starts with "+" continue the same session
+            if (inputText.equals("+")) inputTokens.add(lastToken);
+            else if (inputText.startsWith("+"))
+            {
+                inputTokens.addAll(tokenizer.encode(inputText.substring(1)));
+            }
+            else
+            {
+                // Convert the input text into list of tokens
+                inputTokens = tokenizer.encode(inputText);
+
+                // Clear the transformer's stored values
+                pos = 0;
+                transformer.clear();
+            }
+
+            // Use the Transformer
+            List<Integer> outputTokens = transformer.executeRequest(inputTokens, pos);
+
+            // Convert the output to text and print it
+            String response = tokenizer.decode(outputTokens);
+            print(response, outputTokens, tokenizer);
+
+            pos += outputTokens.size();
+            lastToken = outputTokens.get(outputTokens.size() - 1);
+        }
+    }
+
+    private void logo()
+    {
         OUT.println("  _____________________________      ___");
         OUT.println(" /  _____/\\______   \\__    ___/   __|  /____   _____   ____");
         OUT.println("/   \\  ___ |     ___/ |    |     / __ |/ __ \\ /     \\ /  _ \\");
         OUT.println("\\    \\_\\  \\|    |     |    |    / /_/ \\  ___/|  Y Y  (  <_> )");
         OUT.println(" \\________/|____|     |____|    \\_____|\\_____>__|_|__/\\____/");
         OUT.println("Util: " + Util.getUtilName() + "\n");
-
-        try
-        {
-            Arguments arguments = readArguments(args);
-
-            OUT.println("Model: " + arguments.getPath() + "/" + arguments.getName());
-
-            Settings settings = new Settings(arguments);
-
-            int hiddenSize = settings.getHiddenSize();
-            int headsCount = settings.getHeadCount();
-            OUT.print("Number of parameters: " + Math.round(settings.getParameterSize() / 1000000d) + " M");
-            OUT.print(" (Hidden size: " + hiddenSize + ", decoders: " + settings.getDecoderCount());
-            OUT.println(", heads: " + headsCount + ", head size: " + (hiddenSize / headsCount) +")");
-            OUT.println("Maximum length of generated text: " + arguments.getLengthLimit());
-            OUT.println("Output is selected from the best " + arguments.getTopK() + " tokens (topK)");
-
-            OUT.print("\nLoading trained parameters... ");
-
-            Tokenizer tokenizer = Tokenizer.getInstance(settings);
-
-            ParameterReader parameterReader = new ParameterReader(arguments.getModelPath(), settings);
-
-            PositionEmbedder positionEmbedder = PositionEmbedder.getInstance(settings, parameterReader);
-
-            Transformer transformer = new Transformer(settings, tokenizer, parameterReader, positionEmbedder);
-
-            OUT.print("Done.");
-
-            // For storing the position and last token for the case the session will be continued using "+" as input
-            int pos = 0;
-            int lastToken = settings.getEndOfTextToken();
-
-            while (true)
-            {
-                // Read the input text
-                OUT.print("\n\nInput text: ");
-                BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-                String input = reader.readLine();
-
-                List<Integer> inputTokens = new ArrayList<>();
-
-                if (input.startsWith("+"))
-                {
-                    // If the input starts with "+" continue the same session
-                    inputTokens.add(lastToken);
-                    inputTokens.addAll(tokenizer.encode(input.substring(1)));
-                }
-                else
-                {
-                    inputTokens = tokenizer.encode(input);
-
-                    // Clear the transformer's stored values
-                    pos = 0;
-                    transformer.clear();
-                }
-
-                // Use the Transformer
-                List<Integer> outputTokens = transformer.executeAll(inputTokens, pos);
-
-                // Convert the output to text and print it
-                String response = tokenizer.decode(outputTokens);
-                print(response, outputTokens, tokenizer);
-
-                // Store the position and last token for the case the session will be continued using "+" as input
-                pos += outputTokens.size();
-                lastToken = outputTokens.get(outputTokens.size() - 1);
-            }
-        }
-        catch (Exception e)
-        {
-            OUT.println("\nERROR: " + e.getMessage());
-        }
     }
 
-    private static void print(String response, List<Integer> outputTokens, Tokenizer tokenizer)
+    private String input(String text) throws IOException
+    {
+        OUT.print("\n\n" + text + ": ");
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        return reader.readLine();
+    }
+
+    private void print(String response, List<Integer> outputTokens, Tokenizer tokenizer)
     {
         // The response was printed token by token, but for multi-token characters only "�" will be displayed
 
@@ -119,7 +112,7 @@ public class App
         }
     }
 
-    private static Arguments readArguments(String[] args) throws Exception
+    private Arguments readArguments(String[] args) throws Exception
     {
         // Default values
         if (args == null || args.length == 0)
@@ -155,7 +148,7 @@ public class App
         return new Arguments(name, path, maxLength, topK);
     }
 
-    private static int readInt(String value, int defaultValue)
+    private int readInt(String value, int defaultValue)
     {
         try
         {

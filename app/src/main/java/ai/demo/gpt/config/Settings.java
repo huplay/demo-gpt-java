@@ -114,6 +114,13 @@ public class Settings
                 isCleanDecoder.put((i + 1), true);
             }
         }
+
+        // Print settings
+        OUT.print("Number of parameters: " + Math.round(getParameterSize() / 1000000d) + " M");
+        OUT.print(" (Hidden size: " + hiddenSize + ", decoders: " + decoderCount);
+        OUT.println(", heads: " + headCount + ", head size: " + getHeadSize() +")");
+        OUT.println("Maximum length of generated text: " + arguments.getLengthLimit());
+        OUT.println("Output is selected from the best " + arguments.getTopK() + " tokens (topK)");
     }
 
     public static Map<String, String> readProperties(String fileName) throws Exception
@@ -331,5 +338,20 @@ public class Settings
     public boolean isCleanDecoder(int decoderId)
     {
         return isCleanDecoder.get(decoderId) != null;
+    }
+
+    public int getHeadSize()
+    {
+        return hiddenSize / headCount;
+    }
+
+    public boolean hasAttention(int decoderId)
+    {
+        return ! attentionType[decoderId].equalsIgnoreCase(ATTENTION_NONE);
+    }
+
+    public int getMaxAttentionSize(int decoderId)
+    {
+        return attentionType[decoderId].equalsIgnoreCase(ATTENTION_LOCAL) ? localAttentionSize : Integer.MAX_VALUE;
     }
 }

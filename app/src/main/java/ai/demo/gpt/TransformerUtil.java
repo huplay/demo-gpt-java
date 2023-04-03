@@ -29,7 +29,7 @@ public class TransformerUtil
     /**
      * Standard normalization with applying weights and biases
      */
-    public static float[] normalization(float[] vector, float[] weights, float[] biases, float epsilon)
+    public static float[] norm(float[] vector, float[] weights, float[] biases, float epsilon)
     {
         // Standard normalization
         float[] result = Util.normalize(vector, epsilon);

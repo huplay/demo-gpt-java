@@ -7,7 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Converting the input text to list of tokens (encode) and the list of tokens to output text (decode)
+ * Tokenizer which fully compatible with the OpenAI GPT-2 and GPT-3 tokenizer (used for other models as well)
  */
 public class GPT2Tokenizer implements Tokenizer
 {
@@ -35,19 +35,6 @@ public class GPT2Tokenizer implements Tokenizer
         merges = FileReader.readMergesFile(path + "/vocab.bpe", true);
     }
 
-    private void addCharRange(int pos, char firstChar, char lastChar)
-    {
-        for (int i = firstChar; i <= lastChar; i++)
-        {
-            charEncoding.put((char) i, (byte)pos);
-            charDecoding.put(pos, (char) i);
-            pos++;
-        }
-    }
-
-    /**
-     * Convert text to list of tokens
-     */
     public List<Integer> encode(String text)
     {
         if (text == null) return Collections.singletonList(0);
@@ -74,7 +61,7 @@ public class GPT2Tokenizer implements Tokenizer
 
         for (String word : unicodes)
         {
-            for (String token : bpe(word).split(" "))
+            for (String token : BytePairEncoding.encode(word, merges).split(" "))
             {
                 Integer value = tokenEncoding.get(token);
                 if (value != null)
@@ -87,9 +74,6 @@ public class GPT2Tokenizer implements Tokenizer
         return result;
     }
 
-    /**
-     * Convert list of tokens to text
-     */
     public String decode(List<Integer> tokens)
     {
         StringBuilder textBuilder = new StringBuilder();
@@ -108,81 +92,13 @@ public class GPT2Tokenizer implements Tokenizer
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
-    /**
-     * Byte pair encoding
-     */
-    public String bpe(String token)
+    private void addCharRange(int pos, char firstChar, char lastChar)
     {
-        if (token == null || token.length() < 2) return token;
-
-        List<String> word = new ArrayList<>();
-        for (char c : token.toCharArray())
+        for (int i = firstChar; i <= lastChar; i++)
         {
-            word.add(String.valueOf(c));
+            charEncoding.put((char) i, (byte)pos);
+            charDecoding.put(pos, (char) i);
+            pos++;
         }
-
-        List<Pair> pairs = Pair.getPairs(word);
-
-        while (true)
-        {
-            Pair pair = Pair.findFirstPair(pairs, merges);
-            if (pair == null) break;
-
-            List<String> newWord = new ArrayList<>();
-
-            int i = 0;
-            while (i < word.size())
-            {
-                int j = findFromIndex(word, pair.getLeft(), i);
-
-                if (j != -1)
-                {
-                    newWord.addAll(word.subList(i, j));
-                    i = j;
-                }
-                else
-                {
-                    newWord.addAll(word.subList(i, word.size()));
-                    break;
-                }
-
-                if (word.get(i).equals(pair.getLeft()) && i < word.size() - 1 && word.get(i + 1).equals(pair.getRight()))
-                {
-                    newWord.add(pair.getLeft() + pair.getRight());
-                    i = i + 2;
-                }
-                else
-                {
-                    newWord.add(word.get(i));
-                    i++;
-                }
-            }
-
-            word = newWord;
-
-            if (word.size() == 1)
-            {
-                break;
-            }
-            else
-            {
-                pairs = Pair.getPairs(word);
-            }
-        }
-
-        return String.join(" ", word);
-    }
-
-    /**
-     * Find a String in a list starting from a provided position (from index)
-     */
-    private int findFromIndex(List<String> input, String find, int from)
-    {
-        for (int i = from; i < input.size(); i++)
-        {
-            if (input.get(i).equals(find)) return i;
-        }
-
-        return -1;
     }
 }

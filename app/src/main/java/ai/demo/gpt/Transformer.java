@@ -49,10 +49,12 @@ public class Transformer
      * Transformer token processing logic
      * This method implements the logic how the input tokens and the new and new generated tokens are passed to the transformer
      */
-    public List<Integer> executeAll(List<Integer> inputTokens, int startPos)
+    public List<Integer> executeRequest(List<Integer> inputTokens, int startPos)
     {
+        List<Integer> result = new ArrayList<>();
         int intputSize = inputTokens.size();
 
+        // Process the input tokens (except the last)
         if (intputSize == 0)
         {
             // If the input is empty, use the END_OF_TEXT token as input
@@ -66,37 +68,32 @@ public class Transformer
             for (int pos = 0; pos < intputSize - 1; pos++)
             {
                 OUT.print("."); // Printing a dot to show there is a progress
-                execute(pos + startPos, inputTokens.get(pos));
+                processToken(pos + startPos, inputTokens.get(pos), false);
             }
         }
 
-        // Collector of the generated new tokens
-        List<Integer> result = new ArrayList<>();
-
+        // Process the last input token and repeat it with the newly generated tokens
         int token = inputTokens.get(intputSize - 1);
-        OUT.print(". "); // Printing something to show there is a progress
+        OUT.println(". "); // Printing something to show there is a progress
 
         // Use the transformer again an again to generate new tokens
         for (int pos = intputSize - 1; pos < settings.getLengthLimit() + intputSize; pos++)
         {
             // Add the last input token or the previously generated new token as input
-            float[] output = execute(pos + startPos, token);
+            float[] hiddenState = processToken(pos + startPos, token, true);
 
-            // The output will be the next new token
-            token = selectNextToken(output);
+            token = getOutputToken(hiddenState);
             result.add(token);
 
-            // Exit if the END_OF_TEXT token was chosen
+            // Exit if the END_OF_TEXT token was chosen or the maximum length is reached
             if (token == settings.getEndOfTextToken()) break;
-
-            // Exit if the maximum length is reached
             if (intputSize + result.size() + startPos >= settings.getMaxLength()) break;
         }
 
         return result;
     }
 
-    private float[] execute(int pos, int token)
+    private float[] processToken(int pos, int token, boolean withOutput)
     {
         // Word token embedding
         float[] hiddenState = tokenEmbeddings[token];
@@ -107,19 +104,27 @@ public class Transformer
         // Decoder stack
         for (TransformerDecoder decoder : decoders)
         {
-            hiddenState = decoder.execute(hiddenState);
-        }
+            hiddenState = decoder.execute(hiddenState, withOutput);
 
-        // Final normalization
-        if (settings.isPreNormalization())
-        {
-            hiddenState = normalization(hiddenState, normFinalWeights, normFinalBiases, settings.getEpsilon());
+            decoder.clean(); // To clean some memory if necessary
         }
 
         return hiddenState;
     }
 
-    private int selectNextToken(float[] output)
+    private int getOutputToken(float[] hiddenState)
+    {
+        // Final normalization (only if pre normalization is used)
+        if (settings.isPreNormalization())
+        {
+            hiddenState = norm(hiddenState, normFinalWeights, normFinalBiases, settings.getEpsilon());
+        }
+
+        // Chose the next token
+        return determineOutput(hiddenState);
+    }
+
+    private int determineOutput(float[] output)
     {
         // Multiply (dot product) the output with all token embeddings.
         // It will give a higher value if the output is more similar to the token embedding
