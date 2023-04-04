@@ -37,6 +37,7 @@ Every model can contain a `setup.bat` file, which is used to configure the neces
 - `position.embedding`: the type of the position embedding (LEARNED, RoPE)
 - `pre.normalization`: marks that, pre-normalization is used (opposing post-normalization) (true or false)
 - `hidden.size`: the size of the hidden state
+- `feedforward.size`: the size of the feed forward layer (usually four times the hidden size)
 - `decoder.count`: number of decoders
 - `attention.head.count`: number of attention heads
 - `attention.dividend`: dividend at attention scoring - usually the square root of head size (hidden size / head count)
@@ -51,8 +52,8 @@ Optional properties:
 - `name`: name of the model
 - `source`: original creator of the model
 - `attention.local.size`: local attention size (necessary only if local attention type is used)
-- `clean.decoder.<n>`: with value `true` at the `<n>`th decoder the loaded parameters will be dropped after processing a token and reloaded again at the next.
-This slows down the process, but saves memory, so in theory you will be able to try larger models.   
+- `memory.saver.decoders`: how many decoders use the weight parameters directly from disk, without fully loading into memory.
+This slows down the process, but saves memory, so in theory you will be able to try larger models.
 
 ## Models ##
 

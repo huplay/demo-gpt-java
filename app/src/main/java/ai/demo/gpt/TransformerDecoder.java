@@ -20,6 +20,7 @@ public class TransformerDecoder
     private final Settings settings;
     private final PositionEmbedder positionEmbedder;
     private final DecoderParameters params;
+    private final NeuronUtil neuronUtil;
     private final float epsilon;
 
     private final List<float[][]> storedKeys = new ArrayList<>();
@@ -32,6 +33,7 @@ public class TransformerDecoder
         this.settings = settings;
         this.params = new DecoderParameters(decoderId, settings, reader);
         this.positionEmbedder = positionEmbedder;
+        this.neuronUtil = new NeuronUtil(settings, decoderId);
         this.epsilon = settings.getEpsilon();
     }
 
@@ -95,9 +97,9 @@ public class TransformerDecoder
     private float[] attention(float[] hiddenState)
     {
         // Calculate the query, key and value vectors for the actual token:
-        float[] query = applyWeight(hiddenState, params.getQueryWeights(), params.getQueryBiases());
-        float[] key = applyWeight(hiddenState, params.getKeyWeights(), params.getKeyBiases());
-        float[] value = applyWeight(hiddenState, params.getValueWeights(), params.getValueBiases());
+        float[] query = neuronUtil.applyParams(hiddenState, params.getQueryWeights(), params.getQueryBiases(), "att.query");
+        float[] key = neuronUtil.applyParams(hiddenState, params.getKeyWeights(), params.getKeyBiases(), "att.key");
+        float[] value = neuronUtil.applyParams(hiddenState, params.getValueWeights(), params.getValueBiases(), "att.value");
 
         // Split the query, key and value vectors into pieces for all heads
         float[][] queries = Util.splitVector(query, settings.getHeadCount());
@@ -150,20 +152,21 @@ public class TransformerDecoder
         float[] flatSums = Util.flattenMatrix(sums);
 
         // Apply the attention projection weights and biases
-        return applyWeight(flatSums, params.getProjectionWeights(), params.getProjectionBiases());
+        return neuronUtil.applyParams(flatSums, params.getProjectionWeights(), params.getProjectionBiases(), "att.proj");
     }
 
     private float[] neuronLayers(float[] hiddenState)
     {
-        // Layer 1: <hiddenSize> * 4 neurons (using a gelu activation function)
-        hiddenState = applyWeight(hiddenState, params.getMlpLayer1Weights(), params.getMlpLayer1Biases());
-        for (int neuron = 0; neuron < settings.getHiddenSize() * 4; neuron++)
+        // Layer 1: <mlpSize> neurons (usually 4 * <hiddenSize>) (using a gelu activation function)
+        hiddenState = neuronUtil.applyParams(hiddenState, params.getMlpLayer1Weights(), params.getMlpLayer1Biases(), "mlp.layer1");
+
+        for (int neuron = 0; neuron < settings.getFeedForwardSize(); neuron++)
         {
-            hiddenState[neuron] = gelu(hiddenState[neuron]);
+            hiddenState[neuron] = neuronUtil.gelu(hiddenState[neuron]);
         }
 
         // Layer 2: <hiddenSize> neurons (without activation function)
-        return applyWeight(hiddenState, params.getMlpLayer2Weights(), params.getMlpLayer2Biases());
+        return neuronUtil.applyParams(hiddenState, params.getMlpLayer2Weights(), params.getMlpLayer2Biases(), "mlp.layer2");
     }
 
     /**
@@ -173,13 +176,5 @@ public class TransformerDecoder
     {
         storedKeys.clear();
         storedValues.clear();
-    }
-
-    /**
-     * To free some memory if necessary
-     */
-    public void clean()
-    {
-        params.clean();
     }
 }

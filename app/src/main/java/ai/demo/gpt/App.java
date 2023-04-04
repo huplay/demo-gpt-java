@@ -29,7 +29,6 @@ public class App
         Arguments arguments = readArguments(args);
         Settings settings = new Settings(arguments);
 
-        OUT.println("Model: " + arguments.getPath() + "/" + arguments.getName());
         OUT.print("\nLoading parameters... ");
 
         Tokenizer tokenizer = Tokenizer.getInstance(settings);

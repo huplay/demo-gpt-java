@@ -1,7 +1,13 @@
 package ai.demo.gpt;
 
+import ai.demo.gpt.config.Settings;
 import ai.demo.util.Util;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -12,22 +18,7 @@ import static java.lang.Math.*;
 public class TransformerUtil
 {
     /**
-     * Applying weights using vector by matrix multiplication plus adding biases
-     */
-    public static float[] applyWeight(float[] vector, float[][] weights, float[] biases)
-    {
-        float[] result = Util.multiplyVectorByMatrix(vector, weights);
-
-        if (biases != null)
-        {
-            result = Util.addVectors(result, biases);
-        }
-
-        return result;
-    }
-
-    /**
-     * Standard normalization with applying weights and biases
+     * Standard normalization with applying normalization weights and biases
      */
     public static float[] norm(float[] vector, float[] weights, float[] biases, float epsilon)
     {
@@ -41,15 +32,6 @@ public class TransformerUtil
         }
 
         return result;
-    }
-
-    /**
-     * Gaussian Error Linear Unit (GELU) cumulative distribution activation function (approximate implementation)
-     * Original paper: <a href="https://paperswithcode.com/method/gelu" />
-     */
-    public static float gelu(float value)
-    {
-        return (float) (0.5 * value * (1 + tanh(sqrt(2 / PI) * (value + 0.044715 * value * value * value))));
     }
 
     /**

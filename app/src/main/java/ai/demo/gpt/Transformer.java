@@ -105,8 +105,6 @@ public class Transformer
         for (TransformerDecoder decoder : decoders)
         {
             hiddenState = decoder.execute(hiddenState, withOutput);
-
-            decoder.clean(); // To clean some memory if necessary
         }
 
         return hiddenState;

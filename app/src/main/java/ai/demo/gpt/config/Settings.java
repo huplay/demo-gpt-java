@@ -30,6 +30,7 @@ public class Settings
     private final boolean isPreNormalization;
 
     private final int hiddenSize;
+    private final int feedForwardSize;
     private final int decoderCount;
     private final int headCount;
     private final float attentionDividend;
@@ -43,16 +44,14 @@ public class Settings
     private final ByteOrder byteOrder;
     private final boolean isWeightsTransposed;
     private final boolean isQueryKeyValueMerged;
-
-    private final Map<Integer, Boolean> isCleanDecoder = new HashMap<>();
+    private final int memorySaverDecoders;
 
     public Settings(Arguments arguments) throws Exception
     {
         this.arguments = arguments;
 
         // Read all properties from the model.properties file
-        String fileName = arguments.getPath() + "/" + arguments.getName() + "/model.properties";
-        Map<String, String> properties = readProperties(fileName);
+        Map<String, String> properties = readProperties(getModelPath() + "/model.properties");
 
         tokenizer = getProperty(properties, "tokenizer");
         tokenizerConfig = getProperty(properties, "tokenizer.config");
@@ -62,6 +61,7 @@ public class Settings
         positionEncoder = getProperty(properties, "position.embedding");
         isPreNormalization = "true".equals(getProperty(properties, "pre.normalization"));
         hiddenSize = getIntProperty(properties, "hidden.size");
+        feedForwardSize = getIntProperty(properties, "feedforward.size");
         decoderCount = getIntProperty(properties, "decoder.count");
         headCount = getIntProperty(properties, "attention.head.count");
         attentionDividend = getFloatProperty(properties, "attention.dividend");
@@ -107,15 +107,11 @@ public class Settings
         this.isWeightsTransposed = "true".equalsIgnoreCase(properties.get("weights.transposed"));
         this.isQueryKeyValueMerged = "true".equalsIgnoreCase(properties.get("merged.qkv"));
 
-        for (int i = 0; i < decoderCount; i++)
-        {
-            if (properties.get("clean.decoder." + (i + 1)) != null)
-            {
-                isCleanDecoder.put((i + 1), true);
-            }
-        }
+        String memorySaver = properties.get("memory.saver.decoders");
+        this.memorySaverDecoders = memorySaver == null ? 0 : toInt(memorySaver);
 
         // Print settings
+        OUT.println("Model: " + arguments.getPath() + "/" + arguments.getName());
         OUT.print("Number of parameters: " + Math.round(getParameterSize() / 1000000d) + " M");
         OUT.print(" (Hidden size: " + hiddenSize + ", decoders: " + decoderCount);
         OUT.println(", heads: " + headCount + ", head size: " + getHeadSize() +")");
@@ -168,8 +164,8 @@ public class Settings
         long qkvSize = ((long) hiddenSize * hiddenSize + hiddenSize) * 3;
         long projSize = (long) hiddenSize * hiddenSize + hiddenSize;
         long normSize = (long) hiddenSize * 4;
-        long layer1Size = ((long) hiddenSize * hiddenSize + hiddenSize) * 4;
-        long layer2Size = (long) hiddenSize * hiddenSize * 4 + hiddenSize;
+        long layer1Size = ((long) hiddenSize * feedForwardSize + feedForwardSize);
+        long layer2Size = (long) hiddenSize * feedForwardSize + hiddenSize;
 
         return qkvSize + projSize + normSize + layer1Size + layer2Size;
     }
@@ -225,6 +221,16 @@ public class Settings
         }
     }
 
+    public String getModelPath()
+    {
+        return arguments.getPath() + "/" + arguments.getName() + "/";
+    }
+
+    public String getParametersPath()
+    {
+        return getModelPath() + "parameters/";
+    }
+
     public String getTokenizer()
     {
         return tokenizer;
@@ -233,11 +239,6 @@ public class Settings
     public String getTokenizerConfig()
     {
         return tokenizerConfig;
-    }
-
-    public String getPath()
-    {
-        return arguments.getPath();
     }
 
     public int getLengthLimit()
@@ -278,6 +279,11 @@ public class Settings
     public int getHiddenSize()
     {
         return hiddenSize;
+    }
+
+    public int getFeedForwardSize()
+    {
+        return feedForwardSize;
     }
 
     public int getDecoderCount()
@@ -335,9 +341,9 @@ public class Settings
         return isQueryKeyValueMerged;
     }
 
-    public boolean isCleanDecoder(int decoderId)
+    public int getMemorySaverDecoders()
     {
-        return isCleanDecoder.get(decoderId) != null;
+        return memorySaverDecoders;
     }
 
     public int getHeadSize()
