@@ -32,7 +32,7 @@ public class App
         OUT.print("\nLoading parameters... ");
 
         Tokenizer tokenizer = Tokenizer.getInstance(settings);
-        ParameterReader parameterReader = new ParameterReader(arguments.getModelPath(), settings);
+        ParameterReader parameterReader = new ParameterReader(settings);
         PositionEmbedder positionEmbedder = PositionEmbedder.getInstance(settings, parameterReader);
         Transformer transformer = new Transformer(settings, tokenizer, parameterReader, positionEmbedder);
 

@@ -33,7 +33,7 @@ public class TransformerDecoder
         this.settings = settings;
         this.params = new DecoderParameters(decoderId, settings, reader);
         this.positionEmbedder = positionEmbedder;
-        this.neuronUtil = new NeuronUtil(settings, decoderId);
+        this.neuronUtil = new NeuronUtil(params);
         this.epsilon = settings.getEpsilon();
     }
 
@@ -97,9 +97,9 @@ public class TransformerDecoder
     private float[] attention(float[] hiddenState)
     {
         // Calculate the query, key and value vectors for the actual token:
-        float[] query = neuronUtil.applyParams(hiddenState, params.getQueryWeights(), params.getQueryBiases(), "att.query");
-        float[] key = neuronUtil.applyParams(hiddenState, params.getKeyWeights(), params.getKeyBiases(), "att.key");
-        float[] value = neuronUtil.applyParams(hiddenState, params.getValueWeights(), params.getValueBiases(), "att.value");
+        float[] query = neuronUtil.applyParams(hiddenState, params.getQueryWeights(), params.getQueryBiases(), "att.query.w");
+        float[] key = neuronUtil.applyParams(hiddenState, params.getKeyWeights(), params.getKeyBiases(), "att.key.w");
+        float[] value = neuronUtil.applyParams(hiddenState, params.getValueWeights(), params.getValueBiases(), "att.value.w");
 
         // Split the query, key and value vectors into pieces for all heads
         float[][] queries = Util.splitVector(query, settings.getHeadCount());
@@ -152,13 +152,13 @@ public class TransformerDecoder
         float[] flatSums = Util.flattenMatrix(sums);
 
         // Apply the attention projection weights and biases
-        return neuronUtil.applyParams(flatSums, params.getProjectionWeights(), params.getProjectionBiases(), "att.proj");
+        return neuronUtil.applyParams(flatSums, params.getProjectionWeights(), params.getProjectionBiases(), "att.proj.w");
     }
 
     private float[] neuronLayers(float[] hiddenState)
     {
         // Layer 1: <mlpSize> neurons (usually 4 * <hiddenSize>) (using a gelu activation function)
-        hiddenState = neuronUtil.applyParams(hiddenState, params.getMlpLayer1Weights(), params.getMlpLayer1Biases(), "mlp.layer1");
+        hiddenState = neuronUtil.applyParams(hiddenState, params.getMlpLayer1Weights(), params.getMlpLayer1Biases(), "mlp.layer1.w");
 
         for (int neuron = 0; neuron < settings.getFeedForwardSize(); neuron++)
         {
@@ -166,7 +166,7 @@ public class TransformerDecoder
         }
 
         // Layer 2: <hiddenSize> neurons (without activation function)
-        return neuronUtil.applyParams(hiddenState, params.getMlpLayer2Weights(), params.getMlpLayer2Biases(), "mlp.layer2");
+        return neuronUtil.applyParams(hiddenState, params.getMlpLayer2Weights(), params.getMlpLayer2Biases(), "mlp.layer2.w");
     }
 
     /**

@@ -34,8 +34,8 @@ public class Transformer
 
         int hiddenSize = settings.getHiddenSize();
         this.tokenEmbeddings = reader.readMatrix("input/wte", settings.getTokenCount(), hiddenSize);
-        this.normFinalWeights = settings.isPreNormalization() ? reader.readVector("output/norm.w", hiddenSize) : null;
-        this.normFinalBiases = settings.isPreNormalization() ? reader.readVector("output/norm.b", hiddenSize): null;
+        this.normFinalWeights = reader.readVector("output/norm.w", hiddenSize);
+        this.normFinalBiases = reader.readVector("output/norm.b", hiddenSize);
 
         // Create the decoder stack
         this.decoders = new TransformerDecoder[settings.getDecoderCount()];

@@ -2,8 +2,7 @@ package ai.demo.gpt.config;
 
 import ai.demo.util.Util;
 
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.channels.FileChannel;
@@ -14,157 +13,178 @@ import java.util.*;
  */
 public class ParameterReader
 {
-    private final String modelPath;
     private final Settings settings;
 
-    public ParameterReader(String modelPath, Settings settings)
+    public ParameterReader(Settings settings)
     {
-        this.modelPath = modelPath + "/parameters";
         this.settings = settings;
     }
 
     public float[] readVector(String name, int size)
     {
-        return read(name, size);
+        return readVector(name, size, 1, 0);
+    }
+
+    public float[] readVector(String name, int size, int segments, int index)
+    {
+        return read(name, size, segments, index);
     }
 
     public float[][] readMatrix(String name, int rows, int cols)
     {
-        return readMatrix(name, rows, cols, false);
+        float[] vector = read(name, rows * cols, 1, 0);
+        return vector == null ? null : Util.splitVector(vector, rows);
     }
 
-    public float[][] readWeights(String name, int rows, int cols)
+    public float[][] readWeights(String name, int rows, int cols, int segments, int index)
     {
-        return readMatrix(name, rows, cols, true);
+        float[] vector = read(name, rows * cols, segments, index);
+
+        if (vector == null) return null;
+
+        if (settings.isWeightsTransposed())
+        {
+            return splitVectorTransposed(vector, rows, cols);
+        }
+        else
+        {
+            return Util.splitVector(vector, rows);
+        }
     }
 
-    private float[][] readMatrix(String name, int rows, int cols, boolean isWeight)
+    private float[] read(String name, int size, int segments, int index)
     {
-        float[] numbers = read(name, rows * cols);
+        int bytes = 4; // TODO: FLOAT16 isn't supported here
 
-        return toMatrix(numbers, rows, cols, isWeight && settings.isWeightsTransposed());
-    }
-
-    private float[] read(String name, int size)
-    {
-        List<File> files = findFiles(name, size);
-        if (files == null) return null;
+        File file = findFile(name, size * segments * bytes);
+        if (file == null) return null;
 
         float[] array = new float[size];
 
-        int offset = 0;
+        int position = segments > 1 ? size * index * bytes : 0;
 
-        for (File file : files)
+        try (FileInputStream stream = new FileInputStream(file))
         {
-            int length = (int) file.length() / 4;
+            FileChannel channel = stream.getChannel();
+            ByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, position, size * bytes);
+            buffer.order(settings.getByteOrder());
+            FloatBuffer floatBuffer = buffer.asFloatBuffer();
 
-            try (FileInputStream stream = new FileInputStream(file))
-            {
-                FileChannel inChannel = stream.getChannel();
-
-                ByteBuffer buffer = inChannel.map(FileChannel.MapMode.READ_ONLY, 0, inChannel.size());
-
-                buffer.order(settings.getByteOrder());
-                FloatBuffer floatBuffer = buffer.asFloatBuffer();
-                floatBuffer.get(array, offset, length);
-
-                // TODO: FLOAT16 isn't supported here
-
-                offset += length;
-            }
-            catch (Exception e)
-            {
-                throw new RuntimeException("Parameter file read error. (" + file.getName() + ")");
-            }
+            floatBuffer.get(array, 0, size);
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException("Parameter file read error. (" + file.getName() + ")");
         }
 
         return array;
     }
 
-    private float[][] toMatrix(float[] numbers, int rows, int cols, boolean isTranspose)
+    private float[][] splitVectorTransposed(float[] numbers, int rows, int cols)
     {
-        if (isTranspose)
-        {
-            float[][] transposed = new float[rows][cols];
+        float[][] matrix = new float[rows][cols];
 
-            int row = 0;
-            int col = 0;
-            for (int i = 0; i < numbers.length; i++)
+        int row = 0;
+        int col = 0;
+        for (int i = 0; i < numbers.length; i++)
+        {
+            matrix[row][col] = numbers[i];
+
+            row++;
+
+            if (row == rows)
             {
-                transposed[row][col] = numbers[i];
-
-                row++;
-
-                if (row == rows)
-                {
-                    row = 0;
-                    col++;
-                }
+                row = 0;
+                col++;
             }
+        }
 
-            return transposed;
-        }
-        else
-        {
-            return Util.splitVector(numbers, rows);
-        }
+        return matrix;
     }
 
-    private List<File> findFiles(String name, int size)
+    private File findFile(String name, int size)
     {
         String mappedName = settings.getFileMappings().get(name);
 
         if (mappedName == null) mappedName = name + ".dat";
         else if (mappedName.equalsIgnoreCase("<null>")) return null;
 
-        List<File> files = new ArrayList<>();
-        long sumSize = 0;
-
-        String fileName = modelPath + "/" + mappedName;
+        String fileName = settings.getParametersPath() + mappedName;
         File file = new File(fileName);
 
-        if (file.exists())
-        {
-            files.add(file);
-            sumSize = file.length();
-        }
-        else
+        if ( ! file.exists())
         {
             // Handling files split into parts
+            List<File> partFiles = new ArrayList<>();
+
             int i = 1;
             while (true)
             {
                 File partFile = new File(fileName + ".part" + i);
 
-                if (partFile.exists())
-                {
-                    files.add(partFile);
-                    sumSize += partFile.length();
-                }
+                if (partFile.exists()) partFiles.add(partFile);
                 else break;
 
                 i++;
             }
 
-            if (files.isEmpty())
+            if (partFiles.isEmpty())
             {
                 throw new RuntimeException("Parameter file not found: " + fileName);
             }
+            else
+            {
+                file = mergeAndSaveParts(settings, partFiles, fileName);
+            }
         }
 
-        checkSize(files, size, sumSize);
+        if (file.length() != size)
+        {
+            throw new RuntimeException("Incorrect file size (" + file.length() + "). Expected: " + size);
+        }
 
-        return files;
+        return file;
     }
 
-    private void checkSize(List<File> files, long expectedSize, long actualSize)
+    private File mergeAndSaveParts(Settings settings, List<File> partFiles, String fileName)
     {
-        int numberSize = settings.getDataType().equals("FLOAT16") ? 2 : 4;
+        File file = new File(fileName);
 
-        if (actualSize != expectedSize * numberSize)
+        try
         {
-            throw new RuntimeException("The size of the file(s) (" + files + ", " + actualSize +
-                    ") is incorrect. Expected: " + expectedSize * numberSize);
+            DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
+
+            for (File partFile : partFiles)
+            {
+                float[] array = new float[(int) partFile.length() / 4]; // TODO: Only FLOAT32 is supported here
+
+                try (FileInputStream stream = new FileInputStream(partFile))
+                {
+                    FileChannel inChannel = stream.getChannel();
+                    ByteBuffer buffer = inChannel.map(FileChannel.MapMode.READ_ONLY, 0, inChannel.size());
+                    buffer.order(settings.getByteOrder());
+                    FloatBuffer floatBuffer = buffer.asFloatBuffer();
+
+                    floatBuffer.get(array);
+                }
+                catch (Exception e)
+                {
+                    throw new RuntimeException("Parameter file read error. (" + partFile.getName() + ")");
+                }
+
+                for (float floatValue : array)
+                {
+                    output.writeFloat(floatValue);
+                }
+            }
+
+            output.close();
         }
+        catch (IOException e)
+        {
+            throw new RuntimeException("Can't create concatenated file (" + fileName + ") Exception: " + e.getMessage());
+        }
+
+        return file;
     }
 }

@@ -1,7 +1,5 @@
 package ai.demo.gpt.config;
 
-import ai.demo.util.Util;
-
 public class DecoderParameters
 {
     private final int decoderId;
@@ -31,80 +29,81 @@ public class DecoderParameters
         this.settings = settings;
         this.reader = reader;
 
-        String decoder = "decoder" + (decoderId + 1) + "/";
+        this.queryWeights = readWeights("att.query.w", false);
+        this.queryBiases = readQKVBiases("att.query.b");
+        this.keyWeights = readWeights("att.key.w", false);
+        this.keyBiases = readQKVBiases("att.key.b");
+        this.valueWeights = readWeights("att.value.w", false);
+        this.valueBiases = readQKVBiases("att.value.b");
+        this.projectionWeights = readWeights("att.proj.w", false);
+        this.projectionBiases = reader.readVector(prefixedName("att.proj.b"), settings.getHiddenSize());
+        this.attNormWeights = reader.readVector(prefixedName("att.norm.w"), settings.getHiddenSize());
+        this.attNormBiases = reader.readVector(prefixedName("att.norm.b"), settings.getHiddenSize());
+        this.mlpLayer1Weights = readWeights("mlp.layer1.w", false);
+        this.mlpLayer1Biases = reader.readVector(prefixedName("mlp.layer1.b"), settings.getFeedForwardSize());
+        this.mlpLayer2Weights = readWeights("mlp.layer2.w", false);
+        this.mlpLayer2Biases = reader.readVector(prefixedName("mlp.layer2.b"), settings.getHiddenSize());
+        this.mlpNormWeights = reader.readVector(prefixedName("mlp.norm.w"), settings.getHiddenSize());
+        this.mlpNormBiases = reader.readVector(prefixedName("mlp.norm.b"), settings.getHiddenSize());
+    }
+
+    public float[][] readWeights(String name, boolean isForced)
+    {
         int hiddenSize = settings.getHiddenSize();
-        int mlpSize = settings.getFeedForwardSize();
+        int feedForwardSize = settings.getFeedForwardSize();
 
-        // Don't load the weights of the first <memorySaverDecoders> decoders into memory if we use memory saver decoders
-        boolean loadWeightsIntoMemory = decoderId >= settings.getMemorySaverDecoders();
-
-        if (settings.isQueryKeyValueMerged())
+        switch (name)
         {
-            if (loadWeightsIntoMemory)
-            {
-                // If the query, key and value matrices stored in the same file we have to split them
-                float[][] qkvWeights = reader.readWeights(decoder + "att.query.key.value.w", hiddenSize * 3, hiddenSize);
-                float[][][] qkvWeightSplit = Util.splitMatrix(qkvWeights, 3);
-
-                this.queryWeights = qkvWeightSplit[0];
-                this.keyWeights = qkvWeightSplit[1];
-                this.valueWeights = qkvWeightSplit[2];
-            }
-            else
-            {
-                this.queryWeights = null;
-                this.keyWeights = null;
-                this.valueWeights = null;
-            }
-
-            float[] qkvBiases = reader.readVector(decoder + "att.query.key.value.b", hiddenSize * 3);
-            float[][] qkvBiasSplit = Util.splitVector(qkvBiases, 3);
-
-            this.queryBiases = qkvBiasSplit[0];
-            this.keyBiases = qkvBiasSplit[1];
-            this.valueBiases = qkvBiasSplit[2];
+            case "att.query.w": return readQKV(name, 0, hiddenSize, hiddenSize, isForced);
+            case "att.key.w": return readQKV(name, 1, hiddenSize, hiddenSize, isForced);
+            case "att.value.w": return readQKV(name, 2, hiddenSize, hiddenSize, isForced);
+            case "att.proj.w": return readWeights(name, hiddenSize, hiddenSize, isForced);
+            case "mlp.layer1.w": return readWeights(name, feedForwardSize, hiddenSize, isForced);
+            case "mlp.layer2.w": return readWeights(name, hiddenSize, feedForwardSize, isForced);
+            default: throw new RuntimeException("Unknown weight type: " + name);
         }
-        else
-        {
-            // Read the query, key and value matrices from separate files
-            if (loadWeightsIntoMemory)
-            {
-                this.queryWeights = reader.readWeights(decoder + "att.query.w", hiddenSize, hiddenSize);
-                this.keyWeights = reader.readWeights(decoder + "att.key.w", hiddenSize, hiddenSize);
-                this.valueWeights = reader.readWeights(decoder + "att.value.w", hiddenSize, hiddenSize);
-            }
-            else
-            {
-                this.queryWeights = null;
-                this.keyWeights = null;
-                this.valueWeights = null;
-            }
+    }
 
-            this.queryBiases = reader.readVector(decoder + "att.query.b", hiddenSize);
-            this.keyBiases = reader.readVector(decoder + "att.key.b", hiddenSize);
-            this.valueBiases = reader.readVector(decoder + "att.value.b", hiddenSize);
+    private float[][] readQKV(String name, int index, int rows, int cols, boolean isForced)
+    {
+        if (isForced || decoderId >= settings.getMemorySaverDecoders())
+        {
+            int segments = settings.isQueryKeyValueMerged() ? 3 : 1;
+            name = settings.isQueryKeyValueMerged() ? "att.query.key.value.w" : name;
+
+            return reader.readWeights(prefixedName(name), rows, cols, segments, index);
         }
 
-        if (loadWeightsIntoMemory)
+        return null;
+    }
+
+    private float[][] readWeights(String name, int rows, int cols, boolean isForced)
+    {
+        if (isForced || decoderId >= settings.getMemorySaverDecoders())
         {
-            this.projectionWeights = reader.readWeights(decoder + "att.proj.w", hiddenSize, hiddenSize);
-            this.mlpLayer1Weights = reader.readWeights(decoder + "mlp.layer1.w", mlpSize, hiddenSize);
-            this.mlpLayer2Weights = reader.readWeights(decoder + "mlp.layer2.w", hiddenSize,mlpSize);
-        }
-        else
-        {
-            this.projectionWeights = null;
-            this.mlpLayer1Weights = null;
-            this.mlpLayer2Weights = null;
+            return reader.readWeights(prefixedName(name), rows, cols, 1, 0);
         }
 
-        this.projectionBiases = reader.readVector(decoder + "att.proj.b", hiddenSize);
-        this.attNormWeights = reader.readVector(decoder + "att.norm.w", hiddenSize);
-        this.attNormBiases = reader.readVector(decoder + "att.norm.b", hiddenSize);
-        this.mlpLayer1Biases = reader.readVector(decoder + "mlp.layer1.b", mlpSize);
-        this.mlpLayer2Biases = reader.readVector(decoder + "mlp.layer2.b", hiddenSize);
-        this.mlpNormWeights = reader.readVector(decoder + "mlp.norm.w", hiddenSize);
-        this.mlpNormBiases = reader.readVector(decoder + "mlp.norm.b", hiddenSize);
+        return null;
+    }
+
+    private float[] readQKVBiases(String name)
+    {
+        int segments = settings.isQueryKeyValueMerged() ? 3 : 1;
+        String finalName = settings.isQueryKeyValueMerged() ? "att.query.key.value.b" : name;
+
+        switch (name)
+        {
+            case "att.query.b": return reader.readVector(prefixedName(finalName), settings.getHiddenSize(), segments, 0);
+            case "att.key.b": return reader.readVector(prefixedName(finalName), settings.getHiddenSize(), segments, 1);
+            case "att.value.b": return reader.readVector(prefixedName(finalName), settings.getHiddenSize(), segments, 2);
+            default : throw new RuntimeException("Unknown bias type: " + name);
+        }
+    }
+
+    private String prefixedName(String name)
+    {
+        return "decoder" + (decoderId + 1) + "/" + name;
     }
 
     public float[][] getQueryWeights()

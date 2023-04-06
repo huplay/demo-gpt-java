@@ -62,7 +62,7 @@ Execute the application:
     
 Or on any systems:```java -jar target/demo-gpt-app.jar <model-name>```
 
-The models are organized in a folder structure, so somtimes the `model-name` should contain it's path. For example:
+The models are organized in a folder structure, so somtimes the `model-name` should contain its path. For example:
 
 `run GPT-1`
 
@@ -99,8 +99,7 @@ You can leave it empty, or type something, which will be continued by the system
 After that the system prints the generated tokens (one by one). If the maximum length is reached, or the response finished by an `END-OF-TEXT` token, a new prompt will be given.
 
 Normally every prompt starts a completely new session (the state is cleared), but if you want to remain in the same context, start your input text by `+`.
-If you use only a single `x` character, without more content, the system will continue the text as it would do without the limit of the max length.
-If the maximum token amount is reached, no output will be produced (starting the text by`+`). 
+If you use only a single `+` character, without more content, the system will continue the text as it would do without the limit of the max length.
 
 To quit press Ctrl + C.
 

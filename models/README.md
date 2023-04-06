@@ -21,7 +21,7 @@ The standard structure for the parameters is the following:
 - `output`: Containing parameters used at the output side of the Transformer (final normalization)
   - `norm.w.dat`, `norm.b.dat`
 
-Some files are too big to upload to GitHub, so these are split into multiple files (`.part1`, `.part2`, ...), merged automatically when the parameters are read.
+Some files are too big to upload to GitHub, so these are split into multiple files (`.part1`, `.part2`, ...). These files are merged automatically when the parameters are read. (The merged file is saved.)
 
 If the parameters are from an external source using a different structure the mapping between the standard format and the actual can be described in the `model.properties` file.
 
@@ -45,7 +45,7 @@ Every model can contain a `setup.bat` file, which is used to configure the neces
 - `epsilon`: epsilon, used at normalization (mostly 1e-5f)
 - `data.type`: data type of the values. (Currently, only FLOAT32 is supported: 4 bytes per value. FLOAT16 would be the another commonly used possibility.)
 - `byte.order`: BIG_ENDIAN or LITTLE_ENDIAN
-- `matrix.order.<expression>`: how the matrix is stored. ROW or COLUMN first.
+- `weights.transposed`: weights are stored horizontally (transposed) or not (vertically). Vertical is the more convenient order. (Used in Pytorch files.) 
 - `file.<standard name>`: file mapping from the standard name. (Use <null> if the specific file is missing. It works only with bias files, the weight are compulsory.)
 
 Optional properties:
