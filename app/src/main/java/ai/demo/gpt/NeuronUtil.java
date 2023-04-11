@@ -43,6 +43,7 @@ public class NeuronUtil
      */
     public float gelu(float value)
     {
+        // Using a constant for sqrt(2 / PI) didn't make it faster, most likely Java optimized it
         return (float) (0.5 * value * (1 + tanh(sqrt(2 / PI) * (value + 0.044715 * value * value * value))));
     }
 }

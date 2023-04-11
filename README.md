@@ -190,6 +190,9 @@ Proposal for a more efficient but still good performing sparse solution, where e
 Almost exactly the same architecture as GPT-2, but in different sizes, and some decoders use sparse attention. (The original attention called `global`, the new solution is `local`.)
 It is a very simple change: only the most recent tokens are used by the attention mechanism (last 256), the older tokens are dropped from the calculation.
 
+### BLOOM ###
+
+https://arxiv.org/pdf/2211.05100.pdf
 
 ## Read more ##
 

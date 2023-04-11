@@ -27,6 +27,8 @@ public class Settings
     private final int maxLength;
 
     private final String positionEncoder;
+
+    private final boolean isInputNormalization;
     private final boolean isPreNormalization;
 
     private final int hiddenSize;
@@ -59,7 +61,8 @@ public class Settings
         endOfTextToken = getIntProperty(properties, "end.of.text.token");
         maxLength = getIntProperty(properties, "max.length");
         positionEncoder = getProperty(properties, "position.embedding");
-        isPreNormalization = "true".equals(getProperty(properties, "pre.normalization"));
+        isInputNormalization = "true".equals(getProperty(properties, "input.normalization", true));
+        isPreNormalization = "true".equals(getProperty(properties, "pre.normalization", true));
         hiddenSize = getIntProperty(properties, "hidden.size");
         feedForwardSize = getIntProperty(properties, "feedforward.size");
         decoderCount = getIntProperty(properties, "decoder.count");
@@ -153,7 +156,9 @@ public class Settings
     public long getParameterSize()
     {
         long wteSize = (long) tokenCount * hiddenSize;
-        long wpeSize = (long) maxLength * hiddenSize;
+
+        long wpeSize = positionEncoder.equals("LEARNED") ? (long) maxLength * hiddenSize : 0;
+
         long finalNormSize = (long) hiddenSize * 2;
 
         return wteSize + wpeSize + (getDecoderParameterSize() * decoderCount) + finalNormSize;
@@ -182,9 +187,14 @@ public class Settings
 
     private String getProperty(Map<String, String> properties, String key) throws Exception
     {
+        return getProperty(properties, key, false);
+    }
+
+    private String getProperty(Map<String, String> properties, String key, boolean isOptional) throws Exception
+    {
         String value = properties.get(key);
 
-        if (value == null)
+        if ( ! isOptional && value == null)
         {
             throw new Exception("Missing entry in the model.properties file: '" + key + "'.");
         }
@@ -264,6 +274,11 @@ public class Settings
     public String getPositionEncoder()
     {
         return positionEncoder;
+    }
+
+    public boolean isInputNormalization()
+    {
+        return isInputNormalization;
     }
 
     public boolean isPreNormalization()

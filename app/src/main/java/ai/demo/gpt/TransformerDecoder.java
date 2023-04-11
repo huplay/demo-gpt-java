@@ -109,9 +109,10 @@ public class TransformerDecoder
         // Store the keys and values (these will be available while the following tokens will be processed)
         storedKeys.add(keyByHead);
         storedValues.add(valueByHead);
+        int storedSize = storedKeys.size();
 
         // Using local attention there is a maximum attention size (otherwise the max in practice infinite)
-        if (storedKeys.size() > settings.getMaxAttentionSize(decoderId))
+        if (storedSize > settings.getMaxAttentionSize(decoderId))
         {
             // Topping the maximum attention size we can drop the oldest stored values
             storedKeys.remove(0);
@@ -121,29 +122,30 @@ public class TransformerDecoder
         float[][] valueAggregate = new float[settings.getHeadCount()][settings.getHeadSize()];
 
         // Scoring the previous tokens (including the actual), separately for all heads
-        // Again: we have to score not only the previous, but the actual token as well
-        // That is the reason of that we already added the actual key/value to the stored keys/values
         for (int head = 0; head < settings.getHeadCount(); head++)
         {
-            float[] actualQuery = positionEmbedder.addRelativePosition(queryByHead[head], storedKeys.size() - 1);
+            float[] actualQuery = positionEmbedder.applyToQuery(queryByHead[head], storedSize, storedSize - 1, head);
 
             // Calculate the scores
-            float[] scores = new float[storedKeys.size()];
-            for (int pos = 0; pos < storedKeys.size(); pos++)
+            float[] scores = new float[storedSize];
+
+            for (int pos = 0; pos < storedSize; pos++)
             {
-                float[] relatedKey = positionEmbedder.addRelativePosition(storedKeys.get(pos)[head], pos);
+                float[] relatedKey = positionEmbedder.applyToKey(storedKeys.get(pos)[head], storedSize, pos, head);
 
                 // The score is calculated multiplying the "actual" query vector and the "related" key vector
-                scores[pos] = Util.dotProduct(actualQuery, relatedKey) / settings.getAttentionDividend();
+                float score = Util.dotProduct(actualQuery, relatedKey) / settings.getAttentionDividend();
+
+                scores[pos] = positionEmbedder.applyToScore(score, storedSize, pos, head);
             }
 
             // Softmax
             scores = softmax(scores);
 
             // Multiply the value matrices with the scores, and sum up
-            for (int pos = 0; pos < storedKeys.size(); pos++)
+            for (int pos = 0; pos < storedSize; pos++)
             {
-                float[] relatedValue = storedValues.get(pos)[head];
+                float[] relatedValue = positionEmbedder.applyToValue(storedValues.get(pos)[head], storedSize, pos, head);
 
                 float[] multipliedValue = Util.multiplyVectorByScalar(relatedValue, scores[pos]);
                 

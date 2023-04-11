@@ -34,7 +34,7 @@ Every model can contain a `setup.bat` file, which is used to configure the neces
 - `token.count`: number of tokens
 - `end.of.text.token`: token id for marking the END-OF-TEXT
 - `max.length`: context size, the number of tokens the system can process (limited by the position embedding)
-- `position.embedding`: the type of the position embedding (LEARNED, RoPE)
+- `position.embedding`: the type of the position embedding (LEARNED, SINUSOIDAL, ROPE, ALIBI)
 - `pre.normalization`: marks that, pre-normalization is used (opposing post-normalization) (true or false)
 - `hidden.size`: the size of the hidden state
 - `feedforward.size`: the size of the feed forward layer (usually four times the hidden size)

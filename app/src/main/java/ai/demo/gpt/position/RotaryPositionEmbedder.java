@@ -3,7 +3,7 @@ package ai.demo.gpt.position;
 import ai.demo.gpt.config.ParameterReader;
 import ai.demo.gpt.config.Settings;
 
-public class RotaryPositionEmbedder implements PositionEmbedder
+public class RotaryPositionEmbedder extends AbstractPositionEmbedder
 {
     public RotaryPositionEmbedder(Settings settings, ParameterReader parameterReader)
     {
@@ -11,13 +11,7 @@ public class RotaryPositionEmbedder implements PositionEmbedder
     }
 
     @Override
-    public float[] addFixedPosition(float[] input, int pos)
-    {
-        return input;
-    }
-
-    @Override
-    public float[] addRelativePosition(float[] input, int pos)
+    public float[] applyToQuery(float[] input, int length, int pos, int head)
     {
         // TODO: Implement the RoPE
         // https://arxiv.org/abs/2104.09864

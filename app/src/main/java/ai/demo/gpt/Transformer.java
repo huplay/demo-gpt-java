@@ -19,8 +19,10 @@ public class Transformer
     private final Tokenizer tokenizer;
     private final PositionEmbedder positionEmbedder;
     private final float[][] tokenEmbeddings;
-    private final float[] normFinalWeights;
-    private final float[] normFinalBiases;
+    private final float[] inputNormWeights;
+    private final float[] inputNormBiases;
+    private final float[] outputNormWeights;
+    private final float[] outputNormBiases;
     private final TransformerDecoder[] decoders;
 
     /**
@@ -34,8 +36,10 @@ public class Transformer
 
         int hiddenSize = settings.getHiddenSize();
         this.tokenEmbeddings = reader.readMatrix("input/wte", settings.getTokenCount(), hiddenSize);
-        this.normFinalWeights = reader.readVector("output/norm.w", hiddenSize);
-        this.normFinalBiases = reader.readVector("output/norm.b", hiddenSize);
+        this.inputNormWeights = reader.readVector("output/norm.w", hiddenSize);
+        this.inputNormBiases = reader.readVector("output/norm.b", hiddenSize);
+        this.outputNormWeights = reader.readVector("output/norm.w", hiddenSize);
+        this.outputNormBiases = reader.readVector("output/norm.b", hiddenSize);
 
         // Create the decoder stack
         this.decoders = new TransformerDecoder[settings.getDecoderCount()];
@@ -98,8 +102,14 @@ public class Transformer
         // Word token embedding
         float[] hiddenState = tokenEmbeddings[token];
 
-        // Position embedding
-        hiddenState = positionEmbedder.addFixedPosition(hiddenState, pos);
+        // Input position embedding (used only at sinusoidal or learned position embedding)
+        hiddenState = positionEmbedder.applyToInput(hiddenState, pos);
+
+        // Optional input normalization
+        if (settings.isInputNormalization())
+        {
+            hiddenState = norm(hiddenState, inputNormWeights, inputNormBiases, settings.getEpsilon());
+        }
 
         // Decoder stack
         for (TransformerDecoder decoder : decoders)
@@ -112,10 +122,10 @@ public class Transformer
 
     private int getOutputToken(float[] hiddenState)
     {
-        // Final normalization (only if pre normalization is used)
+        // Final normalization (only if pre-normalization is used)
         if (settings.isPreNormalization())
         {
-            hiddenState = norm(hiddenState, normFinalWeights, normFinalBiases, settings.getEpsilon());
+            hiddenState = norm(hiddenState, outputNormWeights, outputNormBiases, settings.getEpsilon());
         }
 
         // Chose the next token
