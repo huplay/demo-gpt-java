@@ -182,14 +182,9 @@ public class Settings
 
     private String getProperty(Map<String, String> properties, String key) throws Exception
     {
-        return getProperty(properties, key, false);
-    }
-
-    private String getProperty(Map<String, String> properties, String key, boolean isOptional) throws Exception
-    {
         String value = properties.get(key);
 
-        if (!isOptional && value == null)
+        if (value == null)
         {
             throw new Exception("Missing entry in the model.properties file: '" + key + "'.");
         }

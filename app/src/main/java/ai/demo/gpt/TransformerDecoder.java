@@ -102,13 +102,13 @@ public class TransformerDecoder
         float[] value = neuronUtil.applyParams(hiddenState, params.getValueWeights(), params.getValueBiases(), "att.value.w");
 
         // Split the query, key and value vectors into pieces for all heads
-        float[][] queries = Util.splitVector(query, settings.getHeadCount());
-        float[][] keys = Util.splitVector(key, settings.getHeadCount());
-        float[][] values = Util.splitVector(value, settings.getHeadCount());
+        float[][] queryByHead = Util.splitVector(query, settings.getHeadCount());
+        float[][] keyByHead = Util.splitVector(key, settings.getHeadCount());
+        float[][] valueByHead = Util.splitVector(value, settings.getHeadCount());
 
         // Store the keys and values (these will be available while the following tokens will be processed)
-        storedKeys.add(keys);
-        storedValues.add(values);
+        storedKeys.add(keyByHead);
+        storedValues.add(valueByHead);
 
         // Using local attention there is a maximum attention size (otherwise the max in practice infinite)
         if (storedKeys.size() > settings.getMaxAttentionSize(decoderId))
@@ -118,23 +118,23 @@ public class TransformerDecoder
             storedValues.remove(0);
         }
 
-        float[][] sums = new float[settings.getHeadCount()][settings.getHeadSize()];
+        float[][] valueAggregate = new float[settings.getHeadCount()][settings.getHeadSize()];
 
         // Scoring the previous tokens (including the actual), separately for all heads
         // Again: we have to score not only the previous, but the actual token as well
         // That is the reason of that we already added the actual key/value to the stored keys/values
         for (int head = 0; head < settings.getHeadCount(); head++)
         {
-            float[] q = positionEmbedder.addRelativePosition(queries[head], storedKeys.size() - 1);
+            float[] actualQuery = positionEmbedder.addRelativePosition(queryByHead[head], storedKeys.size() - 1);
 
             // Calculate the scores
             float[] scores = new float[storedKeys.size()];
             for (int pos = 0; pos < storedKeys.size(); pos++)
             {
-                float[] k = positionEmbedder.addRelativePosition(storedKeys.get(pos)[head], pos);
+                float[] relatedKey = positionEmbedder.addRelativePosition(storedKeys.get(pos)[head], pos);
 
                 // The score is calculated multiplying the "actual" query vector and the "related" key vector
-                scores[pos] = Util.dotProduct(q, k) / settings.getAttentionDividend();
+                scores[pos] = Util.dotProduct(actualQuery, relatedKey) / settings.getAttentionDividend();
             }
 
             // Softmax
@@ -143,13 +143,16 @@ public class TransformerDecoder
             // Multiply the value matrices with the scores, and sum up
             for (int pos = 0; pos < storedKeys.size(); pos++)
             {
-                float[] sum = Util.multiplyVectorByScalar(storedValues.get(pos)[head], scores[pos]);
-                sums[head] = Util.addVectors(sums[head], sum);
+                float[] relatedValue = storedValues.get(pos)[head];
+
+                float[] multipliedValue = Util.multiplyVectorByScalar(relatedValue, scores[pos]);
+                
+                valueAggregate[head] = Util.addVectors(valueAggregate[head], multipliedValue);
             }
         }
 
         // Concatenate the results for all heads
-        float[] flatSums = Util.flattenMatrix(sums);
+        float[] flatSums = Util.flattenMatrix(valueAggregate);
 
         // Apply the attention projection weights and biases
         return neuronUtil.applyParams(flatSums, params.getProjectionWeights(), params.getProjectionBiases(), "att.proj.w");

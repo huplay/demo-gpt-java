@@ -1,13 +1,6 @@
 package ai.demo.gpt;
 
-import ai.demo.gpt.config.Settings;
 import ai.demo.util.Util;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
-import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;

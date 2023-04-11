@@ -137,27 +137,6 @@ public class Util
 
         return ret;
     }
-    public static float[][][] splitMatrix(float[][] matrix, int count)
-    {
-        int size = matrix.length / count;
-        float[][][] ret = new float[count][size][matrix[0].length];
-
-        int segment = 0;
-        int col = 0;
-        for (float value[] : matrix)
-        {
-            ret[segment][col] = value;
-
-            if (col == size - 1)
-            {
-                col = 0;
-                segment++;
-            }
-            else col++;
-        }
-
-        return ret;
-    }
 
     /**
      * Merge the rows of a matrix to a single vector

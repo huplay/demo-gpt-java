@@ -66,7 +66,7 @@ public class ParameterReader
         try (FileInputStream stream = new FileInputStream(file))
         {
             FileChannel channel = stream.getChannel();
-            ByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, position, size * bytes);
+            ByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, position, (long) size * bytes);
             buffer.order(settings.getByteOrder());
             FloatBuffer floatBuffer = buffer.asFloatBuffer();
 

@@ -37,9 +37,4 @@ public class Arguments
     {
         return topK;
     }
-
-    public String getModelPath()
-    {
-        return path + "/" + name;
-    }
 }
