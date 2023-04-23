@@ -11,7 +11,7 @@ public class RotaryPositionEmbedder extends AbstractPositionEmbedder
     }
 
     @Override
-    public float[] applyToQuery(float[] input, int length, int pos, int head)
+    public float[] toQuery(float[] input, int length, int pos, int head)
     {
         // TODO: Implement the RoPE
         // https://arxiv.org/abs/2104.09864

@@ -14,7 +14,7 @@ public class LearnedPositionEmbedder extends AbstractPositionEmbedder
     }
 
     @Override
-    public float[] applyToInput(float[] input, int pos)
+    public float[] toInput(float[] input, int pos)
     {
         return Util.addVectors(input, positionEmbeddings[pos]);
     }

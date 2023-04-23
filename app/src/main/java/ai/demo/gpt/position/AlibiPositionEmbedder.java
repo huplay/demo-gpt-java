@@ -32,7 +32,7 @@ public class AlibiPositionEmbedder extends AbstractPositionEmbedder
     }
 
     @Override
-    public float applyToScore(float input, int length, int pos, int head)
+    public float toScore(float input, int length, int pos, int head)
     {
         return input - slopes[head] * (length - pos - 1);
     }

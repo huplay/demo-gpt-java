@@ -17,7 +17,7 @@ public class Transformer
 {
     private final Settings settings;
     private final Tokenizer tokenizer;
-    private final PositionEmbedder positionEmbedder;
+    private final PositionEmbedder position;
     private final float[][] tokenEmbeddings;
     private final float[] inputNormWeights;
     private final float[] inputNormBiases;
@@ -28,11 +28,11 @@ public class Transformer
     /**
      * Initialization
      */
-    public Transformer(Settings settings, Tokenizer tokenizer, ParameterReader reader, PositionEmbedder positionEmbedder)
+    public Transformer(Settings settings, Tokenizer tokenizer, ParameterReader reader, PositionEmbedder position)
     {
         this.settings = settings;
         this.tokenizer = tokenizer;
-        this.positionEmbedder = positionEmbedder;
+        this.position = position;
 
         int hiddenSize = settings.getHiddenSize();
         this.tokenEmbeddings = reader.readMatrix("input/wte", settings.getTokenCount(), hiddenSize);
@@ -45,7 +45,7 @@ public class Transformer
         this.decoders = new TransformerDecoder[settings.getDecoderCount()];
         for (int i = 0; i < settings.getDecoderCount(); i++)
         {
-            this.decoders[i] = new TransformerDecoder(i, settings, reader, positionEmbedder);
+            this.decoders[i] = new TransformerDecoder(i, settings, reader, position);
         }
     }
 
@@ -103,7 +103,7 @@ public class Transformer
         float[] hiddenState = tokenEmbeddings[token];
 
         // Input position embedding (used only at sinusoidal or learned position embedding)
-        hiddenState = positionEmbedder.applyToInput(hiddenState, pos);
+        hiddenState = position.toInput(hiddenState, pos);
 
         // Optional input normalization
         if (settings.isInputNormalization())

@@ -18,7 +18,7 @@ public class TransformerDecoder
     private final int decoderId;
     private final boolean lastDecoder;
     private final Settings settings;
-    private final PositionEmbedder positionEmbedder;
+    private final PositionEmbedder position;
     private final DecoderParameters params;
     private final NeuronUtil neuronUtil;
     private final float epsilon;
@@ -26,13 +26,13 @@ public class TransformerDecoder
     private final List<float[][]> storedKeys = new ArrayList<>();
     private final List<float[][]> storedValues = new ArrayList<>();
 
-    public TransformerDecoder(int decoderId, Settings settings, ParameterReader reader, PositionEmbedder positionEmbedder)
+    public TransformerDecoder(int decoderId, Settings settings, ParameterReader reader, PositionEmbedder position)
     {
         this.decoderId = decoderId;
         this.lastDecoder = (decoderId == settings.getDecoderCount());
         this.settings = settings;
         this.params = new DecoderParameters(decoderId, settings, reader);
-        this.positionEmbedder = positionEmbedder;
+        this.position = position;
         this.neuronUtil = new NeuronUtil(params);
         this.epsilon = settings.getEpsilon();
     }
@@ -58,6 +58,7 @@ public class TransformerDecoder
     {
         if (settings.isPreNormalization())
         {
+            // These are the steps for most of the models:
             float[] hiddenState = norm(inputHiddenState, params.getAttNormWeights(), params.getAttNormBiases(), epsilon);
 
             hiddenState = attention(hiddenState);
@@ -66,6 +67,7 @@ public class TransformerDecoder
         }
         else
         {
+            // GPT-1 and similarly old models used these steps:
             float[] hiddenState = attention(inputHiddenState);
 
             hiddenState = Util.addVectors(inputHiddenState, hiddenState);
@@ -78,6 +80,7 @@ public class TransformerDecoder
     {
         if (settings.isPreNormalization())
         {
+            // These are the steps for most of the models:
             float[] hiddenState = norm(inputHiddenState, params.getMlpNormWeights(), params.getMlpNormBiases(), epsilon);
 
             hiddenState = neuronLayers(hiddenState);
@@ -86,6 +89,7 @@ public class TransformerDecoder
         }
         else
         {
+            // GPT-1 and similarly old models used these steps:
             float[] hiddenState = neuronLayers(inputHiddenState);
 
             hiddenState = Util.addVectors(inputHiddenState, hiddenState);
@@ -111,7 +115,7 @@ public class TransformerDecoder
         storedValues.add(valueByHead);
         int storedSize = storedKeys.size();
 
-        // Using local attention there is a maximum attention size (otherwise the max in practice infinite)
+        // Used only at sparse attention:
         if (storedSize > settings.getMaxAttentionSize(decoderId))
         {
             // Topping the maximum attention size we can drop the oldest stored values
@@ -119,33 +123,34 @@ public class TransformerDecoder
             storedValues.remove(0);
         }
 
+        // Declaration of the variable for collecting the attention results for all heads
         float[][] valueAggregate = new float[settings.getHeadCount()][settings.getHeadSize()];
 
         // Scoring the previous tokens (including the actual), separately for all heads
         for (int head = 0; head < settings.getHeadCount(); head++)
         {
-            float[] actualQuery = positionEmbedder.applyToQuery(queryByHead[head], storedSize, storedSize - 1, head);
+            float[] actualQuery = queryByHead[head]; /* Optional: */ actualQuery = position.toQuery(actualQuery, storedSize, storedSize - 1, head);
 
             // Calculate the scores
             float[] scores = new float[storedSize];
 
             for (int pos = 0; pos < storedSize; pos++)
             {
-                float[] relatedKey = positionEmbedder.applyToKey(storedKeys.get(pos)[head], storedSize, pos, head);
+                float[] relatedKey = storedKeys.get(pos)[head]; /* Optional: */ relatedKey = position.toKey(relatedKey, storedSize, pos, head);
 
                 // The score is calculated multiplying the "actual" query vector and the "related" key vector
-                float score = Util.dotProduct(actualQuery, relatedKey) / settings.getAttentionDividend();
+                float score = Util.dotProduct(actualQuery, relatedKey); /* Optional: */ score = position.toScore(score, storedSize, pos, head);
 
-                scores[pos] = positionEmbedder.applyToScore(score, storedSize, pos, head);
+                scores[pos] = score / settings.getAttentionDividend();
             }
 
-            // Softmax
+            // Rescaling the scores to values between 0 and 1
             scores = softmax(scores);
 
             // Multiply the value matrices with the scores, and sum up
             for (int pos = 0; pos < storedSize; pos++)
             {
-                float[] relatedValue = positionEmbedder.applyToValue(storedValues.get(pos)[head], storedSize, pos, head);
+                float[] relatedValue = storedValues.get(pos)[head]; /* Optional: */ relatedValue = position.toValue(relatedValue, storedSize, pos, head);
 
                 float[] multipliedValue = Util.multiplyVectorByScalar(relatedValue, scores[pos]);
                 

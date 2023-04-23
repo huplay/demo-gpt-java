@@ -5,15 +5,15 @@ import ai.demo.gpt.config.Settings;
 
 public interface PositionEmbedder
 {
-    float[] applyToInput(float[] input, int pos);
+    float[] toInput(float[] input, int pos);
 
-    float[] applyToQuery(float[] input, int length, int pos, int head);
+    float[] toQuery(float[] input, int length, int pos, int head);
 
-    float[] applyToKey(float[] input, int length, int pos, int head);
+    float[] toKey(float[] input, int length, int pos, int head);
 
-    float[] applyToValue(float[] input, int length, int pos, int head);
+    float[] toValue(float[] input, int length, int pos, int head);
 
-    float applyToScore(float input, int length, int pos, int head);
+    float toScore(float input, int length, int pos, int head);
 
     public static PositionEmbedder getInstance(Settings settings, ParameterReader parameterReader)
     {

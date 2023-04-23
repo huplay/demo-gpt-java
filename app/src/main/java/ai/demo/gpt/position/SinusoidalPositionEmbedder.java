@@ -11,7 +11,7 @@ public class SinusoidalPositionEmbedder extends AbstractPositionEmbedder
     }
 
     @Override
-    public float[] applyToInput(float[] input, int pos)
+    public float[] toInput(float[] input, int pos)
     {
         return input;
     }
