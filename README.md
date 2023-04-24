@@ -168,8 +168,6 @@ The only architectural change to the GPT-1 is that the normalization within the 
 
 ### Sparse Transformer ###
 
-(This isn't implemented here.)
-
 - Generating Long Sequences with Sparse Transformers (2019, OpenAI)
 - Rewon Child, Scott Gray, Alec Radford, Ilya Sutskever
 - https://openai.com/blog/sparse-transformer/
