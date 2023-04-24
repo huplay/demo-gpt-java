@@ -12,4 +12,12 @@
 
     <packaging>jar</packaging>
 
+    <dependencies>
+        <dependency>
+            <groupId>ai.demo.gpt</groupId>
+            <artifactId>demo-gpt-common-util</artifactId>
+            <version>1.0</version>
+        </dependency>
+    </dependencies>
+
 </project>

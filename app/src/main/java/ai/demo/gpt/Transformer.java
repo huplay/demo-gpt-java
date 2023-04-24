@@ -4,10 +4,11 @@ import ai.demo.gpt.config.ParameterReader;
 import ai.demo.gpt.config.Settings;
 import ai.demo.gpt.position.PositionEmbedder;
 import ai.demo.gpt.tokenizer.Tokenizer;
-import ai.demo.util.Util;
+import ai.demo.util.IndexedValue;
 
 import java.util.*;
 import static ai.demo.gpt.App.OUT;
+import static ai.demo.gpt.App.UTIL;
 import static ai.demo.gpt.TransformerUtil.*;
 
 /**
@@ -19,10 +20,10 @@ public class Transformer
     private final Tokenizer tokenizer;
     private final PositionEmbedder position;
     private final float[][] tokenEmbeddings;
-    private final float[] inputNormWeights;
-    private final float[] inputNormBiases;
-    private final float[] outputNormWeights;
-    private final float[] outputNormBiases;
+    private float[] inputNormWeights;
+    private float[] inputNormBiases;
+    private float[] outputNormWeights;
+    private float[] outputNormBiases;
     private final TransformerDecoder[] decoders;
 
     /**
@@ -36,10 +37,18 @@ public class Transformer
 
         int hiddenSize = settings.getHiddenSize();
         this.tokenEmbeddings = reader.readMatrix("input/wte", settings.getTokenCount(), hiddenSize);
-        this.inputNormWeights = reader.readVector("output/norm.w", hiddenSize);
-        this.inputNormBiases = reader.readVector("output/norm.b", hiddenSize);
-        this.outputNormWeights = reader.readVector("output/norm.w", hiddenSize);
-        this.outputNormBiases = reader.readVector("output/norm.b", hiddenSize);
+
+        if (settings.isInputNormalization())
+        {
+            this.inputNormWeights = reader.readVector("input/norm.w", hiddenSize);
+            this.inputNormBiases = reader.readVector("input/norm.b", hiddenSize);
+        }
+
+        if (settings.isOutputNormalization())
+        {
+            this.outputNormWeights = reader.readVector("output/norm.w", hiddenSize);
+            this.outputNormBiases = reader.readVector("output/norm.b", hiddenSize);
+        }
 
         // Create the decoder stack
         this.decoders = new TransformerDecoder[settings.getDecoderCount()];
@@ -102,7 +111,7 @@ public class Transformer
         // Word token embedding
         float[] hiddenState = tokenEmbeddings[token];
 
-        // Input position embedding (used only at sinusoidal or learned position embedding)
+        // Position embedding
         hiddenState = position.toInput(hiddenState, pos);
 
         // Optional input normalization
@@ -122,8 +131,8 @@ public class Transformer
 
     private int getOutputToken(float[] hiddenState)
     {
-        // Final normalization (only if pre-normalization is used)
-        if (settings.isPreNormalization())
+        // Final normalization
+        if (settings.isOutputNormalization())
         {
             hiddenState = norm(hiddenState, outputNormWeights, outputNormBiases, settings.getEpsilon());
         }
@@ -136,10 +145,10 @@ public class Transformer
     {
         // Multiply (dot product) the output with all token embeddings.
         // It will give a higher value if the output is more similar to the token embedding
-        float[] logits = Util.multiplyVectorByTransposedMatrix(output, tokenEmbeddings);
+        float[] logits = UTIL.multiplyVectorByTransposedMatrix(output, tokenEmbeddings);
 
         // Sort (higher to lower) the result of the dot products, retaining the order (index) of the related token
-        List<IndexedValue> orderedLogits = reverseAndFilter(logits, settings.getTopK());
+        List<IndexedValue> orderedLogits = UTIL.reverseAndFilter(logits, settings.getTopK());
 
         // Convert the logits to probabilities
         float[] probabilities = softmax(orderedLogits);
@@ -148,7 +157,7 @@ public class Transformer
         int index = weightedRandomPick(probabilities);
 
         // Lookup the token id
-        int selectedTokenId = orderedLogits.get(index).index;
+        int selectedTokenId = orderedLogits.get(index).getIndex();
 
         // Print the generated token - It isn't perfect, because some words or letters represented by multiple tokens
         OUT.print(tokenizer.decode(Collections.singletonList(selectedTokenId)));

@@ -17,10 +17,10 @@ For the training they used the `Pile` dataset, originally collected by the Eleut
 | Cerebras-111M |         768 |       10 |       12 |        2048 |          111 M | [Link](https://huggingface.co/cerebras/Cerebras-GPT-111M)  |
 | Cerebras-256M |        1088 |       14 |       17 |        2048 |          256 M | [Link](https://huggingface.co/cerebras/Cerebras-GPT-256M)  |
 | Cerebras-590M |        1536 |       18 |       12 |        2048 |          590 M | [Link](https://huggingface.co/cerebras/Cerebras-GPT-590M)  |
-| Cerebras-1.3B |        2048 |       24 |       16 |        2048 |         1316 M | [Link](https://huggingface.co/cerebras/Cerebras-GPT-1.3B)  |
-| Cerebras-2.7B |        2560 |       32 |       32 |        2048 |         2652 M | [Link](https://huggingface.co/cerebras/Cerebras-GPT-2.7B)  |
-| Cerebras-6.7B |        4096 |       32 |       32 |        2048 |         6658 M | [Link](https://huggingface.co/cerebras/Cerebras-GPT-6.7B)  |
-| Cerebras-13B  |        5120 |       40 |       40 |        2048 |        12853 M | [Link](https://huggingface.co/cerebras/Cerebras-GPT-13B)   |
+| Cerebras-1.3B |        2048 |       24 |       16 |        2048 |        1,316 M | [Link](https://huggingface.co/cerebras/Cerebras-GPT-1.3B)  |
+| Cerebras-2.7B |        2560 |       32 |       32 |        2048 |        2,652 M | [Link](https://huggingface.co/cerebras/Cerebras-GPT-2.7B)  |
+| Cerebras-6.7B |        4096 |       32 |       32 |        2048 |        6,658 M | [Link](https://huggingface.co/cerebras/Cerebras-GPT-6.7B)  |
+| Cerebras-13B  |        5120 |       40 |       40 |        2048 |       12,853 M | [Link](https://huggingface.co/cerebras/Cerebras-GPT-13B)   |
 
 You can download the trained parameters using the links above. Only the `pytorch_model.bin` file is needed. (This is a `PKZIP` file, just you have to rename it to `.zip` to make it obvious.)
 You have to extract the files under the `archive/data` folder into the `parameters` folder.

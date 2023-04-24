@@ -15,7 +15,7 @@ public interface PositionEmbedder
 
     float toScore(float input, int length, int pos, int head);
 
-    public static PositionEmbedder getInstance(Settings settings, ParameterReader parameterReader)
+    static PositionEmbedder getInstance(Settings settings, ParameterReader parameterReader)
     {
         switch (settings.getPositionEncoder())
         {

@@ -5,23 +5,21 @@ public class DecoderParameters
     private final int decoderId;
     private final Settings settings;
     private final ParameterReader reader;
+    private boolean isAttentionInitialized;
+    private boolean isMlpInitialized;
 
-    private final float[][] queryWeights;
-    private final float[] queryBiases;
-    private final float[][] keyWeights;
-    private final float[] keyBiases;
-    private final float[][] valueWeights;
-    private final float[] valueBiases;
-    private final float[][] projectionWeights;
-    private final float[] projectionBiases;
-    private final float[] attNormWeights;
-    private final float[] attNormBiases;
-    private final float[][] mlpLayer1Weights;
-    private final float[] mlpLayer1Biases;
-    private final float[][] mlpLayer2Weights;
-    private final float[] mlpLayer2Biases;
-    private final float[] mlpNormWeights;
-    private final float[] mlpNormBiases;
+    private float[] attNormWeights;
+    private float[] attNormBiases;
+    private QueryKeyValueParameters queryKeyValueParameters;
+    private float[][] projectionWeights;
+    private float[] projectionBiases;
+
+    private float[] mlpNormWeights;
+    private float[] mlpNormBiases;
+    private float[][] mlpLayer1Weights;
+    private float[] mlpLayer1Biases;
+    private float[][] mlpLayer2Weights;
+    private float[] mlpLayer2Biases;
 
     public DecoderParameters(int decoderId, Settings settings, ParameterReader reader)
     {
@@ -29,75 +27,70 @@ public class DecoderParameters
         this.settings = settings;
         this.reader = reader;
 
-        this.queryWeights = readWeights("att.query.w", false);
-        this.queryBiases = readQKVBiases("att.query.b");
-        this.keyWeights = readWeights("att.key.w", false);
-        this.keyBiases = readQKVBiases("att.key.b");
-        this.valueWeights = readWeights("att.value.w", false);
-        this.valueBiases = readQKVBiases("att.value.b");
-        this.projectionWeights = readWeights("att.proj.w", false);
-        this.projectionBiases = reader.readVector(prefixedName("att.proj.b"), settings.getHiddenSize());
-        this.attNormWeights = reader.readVector(prefixedName("att.norm.w"), settings.getHiddenSize());
-        this.attNormBiases = reader.readVector(prefixedName("att.norm.b"), settings.getHiddenSize());
-        this.mlpLayer1Weights = readWeights("mlp.layer1.w", false);
-        this.mlpLayer1Biases = reader.readVector(prefixedName("mlp.layer1.b"), settings.getFeedForwardSize());
-        this.mlpLayer2Weights = readWeights("mlp.layer2.w", false);
-        this.mlpLayer2Biases = reader.readVector(prefixedName("mlp.layer2.b"), settings.getHiddenSize());
-        this.mlpNormWeights = reader.readVector(prefixedName("mlp.norm.w"), settings.getHiddenSize());
-        this.mlpNormBiases = reader.readVector(prefixedName("mlp.norm.b"), settings.getHiddenSize());
+        initAttentionBlock(false);
+        initNeuronBlock(false);
     }
 
-    public float[][] readWeights(String name, boolean isForced)
+    public void initAttentionBlock(boolean isForced)
     {
-        int hiddenSize = settings.getHiddenSize();
-        int feedForwardSize = settings.getFeedForwardSize();
-
-        switch (name)
+        if ( ! isAttentionInitialized && (isForced || decoderId >= settings.getMemorySaverDecoders()))
         {
-            case "att.query.w": return readQKV(name, 0, hiddenSize, hiddenSize, isForced);
-            case "att.key.w": return readQKV(name, 1, hiddenSize, hiddenSize, isForced);
-            case "att.value.w": return readQKV(name, 2, hiddenSize, hiddenSize, isForced);
-            case "att.proj.w": return readWeights(name, hiddenSize, hiddenSize, isForced);
-            case "mlp.layer1.w": return readWeights(name, feedForwardSize, hiddenSize, isForced);
-            case "mlp.layer2.w": return readWeights(name, hiddenSize, feedForwardSize, isForced);
-            default: throw new RuntimeException("Unknown weight type: " + name);
+            int hiddenSize = settings.getHiddenSize();
+
+            this.attNormWeights = reader.readVector(prefixedName("att.norm.w"), hiddenSize);
+            this.attNormBiases = reader.readVector(prefixedName("att.norm.b"), hiddenSize);
+            this.queryKeyValueParameters = new QueryKeyValueParameters(decoderId, settings, reader);
+            this.projectionWeights = reader.readWeights(prefixedName("att.proj.w"), hiddenSize, hiddenSize);
+            this.projectionBiases = reader.readVector(prefixedName("att.proj.b"), hiddenSize);
+
+            this.isAttentionInitialized = true;
         }
     }
 
-    private float[][] readQKV(String name, int index, int rows, int cols, boolean isForced)
+    public void closeAttentionBlock()
     {
-        if (isForced || decoderId >= settings.getMemorySaverDecoders())
+        if (decoderId < settings.getMemorySaverDecoders())
         {
-            int segments = settings.isQueryKeyValueMerged() ? 3 : 1;
-            name = settings.isQueryKeyValueMerged() ? "att.query.key.value.w" : name;
+            this.attNormWeights = null;
+            this.attNormBiases = null;
+            this.queryKeyValueParameters = null;
+            this.projectionWeights = null;
+            this.projectionBiases = null;
 
-            return reader.readWeights(prefixedName(name), rows, cols, segments, index);
+            this.isAttentionInitialized = false;
         }
-
-        return null;
     }
 
-    private float[][] readWeights(String name, int rows, int cols, boolean isForced)
+    public void initNeuronBlock(boolean isForced)
     {
-        if (isForced || decoderId >= settings.getMemorySaverDecoders())
+        if ( ! isMlpInitialized && (isForced || decoderId >= settings.getMemorySaverDecoders()))
         {
-            return reader.readWeights(prefixedName(name), rows, cols, 1, 0);
-        }
+            int hiddenSize = settings.getHiddenSize();
+            int feedForwardSize = settings.getFeedForwardSize();
 
-        return null;
+            this.mlpNormWeights = reader.readVector(prefixedName("mlp.norm.w"), hiddenSize);
+            this.mlpNormBiases = reader.readVector(prefixedName("mlp.norm.b"), hiddenSize);
+            this.mlpLayer1Weights = reader.readWeights(prefixedName("mlp.layer1.w"), feedForwardSize, hiddenSize);
+            this.mlpLayer1Biases = reader.readVector(prefixedName("mlp.layer1.b"), feedForwardSize);
+            this.mlpLayer2Weights = reader.readWeights(prefixedName("mlp.layer2.w"), hiddenSize, feedForwardSize);
+            this.mlpLayer2Biases = reader.readVector(prefixedName("mlp.layer2.b"), hiddenSize);
+
+            this.isMlpInitialized = true;
+        }
     }
 
-    private float[] readQKVBiases(String name)
+    public void closeNeuronBlock()
     {
-        int segments = settings.isQueryKeyValueMerged() ? 3 : 1;
-        String finalName = settings.isQueryKeyValueMerged() ? "att.query.key.value.b" : name;
-
-        switch (name)
+        if (decoderId < settings.getMemorySaverDecoders())
         {
-            case "att.query.b": return reader.readVector(prefixedName(finalName), settings.getHiddenSize(), segments, 0);
-            case "att.key.b": return reader.readVector(prefixedName(finalName), settings.getHiddenSize(), segments, 1);
-            case "att.value.b": return reader.readVector(prefixedName(finalName), settings.getHiddenSize(), segments, 2);
-            default : throw new RuntimeException("Unknown bias type: " + name);
+            this.mlpNormWeights = null;
+            this.mlpNormBiases = null;
+            this.mlpLayer1Weights = null;
+            this.mlpLayer1Biases = null;
+            this.mlpLayer2Weights = null;
+            this.mlpLayer2Biases = null;
+
+            this.isMlpInitialized = false;
         }
     }
 
@@ -108,32 +101,32 @@ public class DecoderParameters
 
     public float[][] getQueryWeights()
     {
-        return queryWeights;
+        return queryKeyValueParameters.getQueryWeights();
     }
 
     public float[] getQueryBiases()
     {
-        return queryBiases;
+        return queryKeyValueParameters.getQueryBiases();
     }
 
     public float[][] getKeyWeights()
     {
-        return keyWeights;
+        return queryKeyValueParameters.getKeyWeights();
     }
 
     public float[] getKeyBiases()
     {
-        return keyBiases;
+        return queryKeyValueParameters.getKeyBiases();
     }
 
     public float[][] getValueWeights()
     {
-        return valueWeights;
+        return queryKeyValueParameters.getValueWeights();
     }
 
     public float[] getValueBiases()
     {
-        return valueBiases;
+        return queryKeyValueParameters.getValueBiases();
     }
 
     public float[][] getProjectionWeights()

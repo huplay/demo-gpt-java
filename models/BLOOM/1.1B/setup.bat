@@ -1,0 +1,1 @@
+SET GPT_JAVA_ARGS=-Xmx7G -Xms7G

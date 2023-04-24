@@ -61,12 +61,12 @@ This slows down the process, but saves memory, so in theory you will be able to 
 
 The GPT-2 models were published completely. (Code and trained parameters as well.) You can try all of these using the demo-gpt app:
 
-| Name         | Hidden size | Dec. no. | Head no. | Max. length | Size of params |                                                                                                    |
-|--------------|------------:|---------:|---------:|------------:|---------------:|----------------------------------------------------------------------------------------------------|
-| GPT-2 SMALL  |         768 |       12 |       12 |        1024 |          124 M | [Link](https://github.com/huplay/GPT2-SMALL)                                                       | 
-| GPT-2 MEDIUM |        1024 |       24 |       16 |        1024 |          355 M | [Link](https://github.com/huplay/GPT2-MEDIUM)                                                      |
-| GPT-2 LARGE  |        1280 |       36 |       20 |        1024 |          774 M | [Link](https://github.com/huplay/GPT2-LARGE)                                                       |
-| GPT-2 XL     |        1600 |       48 |       25 |        1024 |        1,558 M | [Link1](https://github.com/huplay/GPT2-XL) <br /> [Link2](https://github.com/huplay/GPT2-XL-part2) |
+| Name         | Hidden size | Dec. no. | Head no. | Max. length | Size of params |
+|--------------|------------:|---------:|---------:|------------:|---------------:|
+| GPT-2 SMALL  |         768 |       12 |       12 |        1024 |          124 M |
+| GPT-2 MEDIUM |        1024 |       24 |       16 |        1024 |          355 M |
+| GPT-2 LARGE  |        1280 |       36 |       20 |        1024 |          774 M |
+| GPT-2 XL     |        1600 |       48 |       25 |        1024 |        1,558 M |
 
 ### GPT-NEO/J/NEOX (EleutherAI) ###
 
@@ -76,32 +76,28 @@ I converted the parameters for the smaller models into my standard format, but o
 
 EleutherAI created the following models so far:
 
-| Name                               | Hidden size | Dec. no. | Head no. | Max. length | Size of params |                                                                                                             |
-|------------------------------------|------------:|---------:|---------:|------------:|---------------:|-------------------------------------------------------------------------------------------------------------|
-| GPT-NEO-SMALL <br /> GPT-NEO-125M  |         768 |       12 |       12 |        2048 |          124 M |  [Link](https://github.com/huplay/GPT-NEO-SMALL)                                                            |
-| GPT-NEO-MEDIUM <br /> GPT-NEO-350M |        1024 |       24 |       16 |        2048 |          355 M |  [Link](https://github.com/huplay/GPT-NEO-MEDIUM)                                                           |
-| GPT-NEO-XL <br /> GPT-NEO-1.3B     |        2048 |       24 |       16 |        2048 |        1,314 M |  [Link](https://github.com/huplay/GPT-NEO-XL)                                                               |
-| GPT-NEO-ADA <br /> GPT-NEO-2.7B    |        2560 |       32 |       20 |        2048 |        2,649 M |  [Link1](https://github.com/huplay/GPT-NEO-ADA) <br /> [Link2](https://github.com/huplay/GPT-NEO-ADA-part2) |
-| GPT-J-6B                           |        4096 |       28 |       16 |        2048 |        5,849 M |                                                                                                             |
-| GPT-NEOX-20B                       |        6144 |       44 |       64 |        2048 |       20,250 M |                                                                                                             |
+| Name                               | Hidden size | Dec. no. | Head no. | Max. length | Size of params |
+|------------------------------------|------------:|---------:|---------:|------------:|---------------:|
+| GPT-NEO-SMALL <br /> GPT-NEO-125M  |         768 |       12 |       12 |        2048 |          124 M |
+| GPT-NEO-MEDIUM <br /> GPT-NEO-350M |        1024 |       24 |       16 |        2048 |          355 M |
+| GPT-NEO-XL <br /> GPT-NEO-1.3B     |        2048 |       24 |       16 |        2048 |        1,314 M |
+| GPT-NEO-ADA <br /> GPT-NEO-2.7B    |        2560 |       32 |       20 |        2048 |        2,649 M |
+| GPT-J-6B                           |        4096 |       28 |       16 |        2048 |        5,849 M |
+| GPT-NEOX-20B                       |        6144 |       44 |       64 |        2048 |       20,250 M |
 
 
 ### BLOOM ###
 
 BLOOM (BigScience Large Open-science Open-access Multilingual Language Model) was created by over a thousand AI developers, organized by Hugging Face, published in May 2022.
 
-It has a larger vocabulary (250,880 tokens) compared to the GPT-2/3 models (50,257), so the size of the word token embedding is bigger. (More parameters as a GPT-2 model with the same architectural size.)
-
-These models are not ported yet because the different tokenizer and position embedding, but I'm working on it.
-
 | Name       | Hidden size | Dec. no. | Head no. | Max. length | Size of params |
 |------------|------------:|---------:|---------:|------------:|---------------:|
-| BLOOM-560M |        1024 |       24 |       16 |        2048 |          561 M | 
-| BLOOM-1.1B |        1536 |       24 |       16 |        2048 |        1,068 M |
-| BLOOM-1.7B |        2048 |       24 |       16 |        2048 |        1,726 M |
-| BLOOM-3B   |        2560 |       30 |       32 |        2048 |        3,007 M |
-| BLOOM-7.1B |        4096 |       30 |       32 |        2048 |        7,077 M |
-| BLOOM      |       14336 |       70 |      112 |        2048 |      176,276 M |
+| BLOOM-560M |        1024 |       24 |       16 |        2048 |          559 M | 
+| BLOOM-1.1B |        1536 |       24 |       16 |        2048 |        1,065 M |
+| BLOOM-1.7B |        2048 |       24 |       16 |        2048 |        1,722 M |
+| BLOOM-3B   |        2560 |       30 |       32 |        2048 |        3,003 M |
+| BLOOM-7.1B |        4096 |       30 |       32 |        2048 |        7,069 M |
+| BLOOM-176B |       14336 |       70 |      112 |        2048 |      176,247 M |
 
 
 ### LLaMA (Meta AI) ###

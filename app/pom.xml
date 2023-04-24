@@ -47,6 +47,11 @@
             <dependencies>
                 <dependency>
                     <groupId>ai.demo.gpt</groupId>
+                    <artifactId>demo-gpt-common-util</artifactId>
+                    <version>1.0</version>
+                </dependency>
+                <dependency>
+                    <groupId>ai.demo.gpt</groupId>
                     <artifactId>demo-gpt-standard-util</artifactId>
                     <version>1.0</version>
                 </dependency>
@@ -57,6 +62,11 @@
             <dependencies>
                 <dependency>
                     <groupId>ai.demo.gpt</groupId>
+                    <artifactId>demo-gpt-common-util</artifactId>
+                    <version>1.0</version>
+                </dependency>
+                <dependency>
+                    <groupId>ai.demo.gpt</groupId>
                     <artifactId>demo-gpt-nd4j-util</artifactId>
                     <version>1.0</version>
                 </dependency>
@@ -65,6 +75,11 @@
         <profile>
             <id>vector-api</id>
             <dependencies>
+                <dependency>
+                    <groupId>ai.demo.gpt</groupId>
+                    <artifactId>demo-gpt-common-util</artifactId>
+                    <version>1.0</version>
+                </dependency>
                 <dependency>
                     <groupId>ai.demo.gpt</groupId>
                     <artifactId>demo-gpt-vector-api-util</artifactId>

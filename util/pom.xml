@@ -16,18 +16,21 @@
         <profile>
             <id>standard</id>
             <modules>
+                <module>common</module>
                 <module>standard</module>
             </modules>
         </profile>
         <profile>
             <id>nd4j</id>
             <modules>
+                <module>common</module>
                 <module>nd4j</module>
             </modules>
         </profile>
         <profile>
             <id>vector-api</id>
             <modules>
+                <module>common</module>
                 <module>vectorAPI</module>
             </modules>
         </profile>

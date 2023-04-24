@@ -1,11 +1,9 @@
 package ai.demo.gpt;
 
-import ai.demo.util.Util;
-import java.util.ArrayList;
-import java.util.Comparator;
+import ai.demo.util.IndexedValue;
 import java.util.List;
-import java.util.TreeSet;
 
+import static ai.demo.gpt.App.UTIL;
 import static java.lang.Math.*;
 
 public class TransformerUtil
@@ -16,7 +14,7 @@ public class TransformerUtil
     public static float[] norm(float[] vector, float[] weights, float[] biases, float epsilon)
     {
         // Standard normalization
-        float[] result = Util.normalize(vector, epsilon);
+        float[] result = UTIL.normalize(vector, epsilon);
 
         // Applying the trained weights and biases
         for (int i = 0; i < vector.length; i++)
@@ -32,17 +30,23 @@ public class TransformerUtil
      */
     public static float[] softmax(float[] vector)
     {
+        float max = UTIL.max(vector);
+
         double total = 0;
         for (float value : vector)
         {
-            total = total + exp(value);
+            double exp = exp(value - max);
+
+            total = total + exp;
         }
 
         float[] ret = new float[vector.length];
 
         for (int i = 0; i < vector.length; i++)
         {
-            ret[i] = (float) (exp(vector[i]) / total);
+            double exp = exp(vector[i] - max);
+
+            ret[i] = (float) (exp / total);
         }
 
         return ret;
@@ -53,17 +57,19 @@ public class TransformerUtil
      */
     public static float[] softmax(List<IndexedValue> values)
     {
+        float max = UTIL.max(values);
+
         double total = 0;
         for (IndexedValue value : values)
         {
-            total = total + exp(value.value);
+            total = total + exp(value.getValue() - max);
         }
 
         float[] ret = new float[values.size()];
 
         for (int i = 0; i < values.size(); i++)
         {
-            ret[i] = (float) (exp(values.get(i).value) / total);
+            ret[i] = (float) (exp(values.get(i).getValue() - max) / total);
         }
 
         return ret;
@@ -94,55 +100,5 @@ public class TransformerUtil
         }
 
         return index;
-    }
-
-    /**
-     * Sort values to reversed order and filter out the lowest values (retain the top [count] values)
-     */
-    public static List<IndexedValue> reverseAndFilter(float[] values, int count)
-    {
-        TreeSet<IndexedValue> indexedValues = new TreeSet<>(new ReverseComparator());
-        for (int i = 0; i < values.length; i++)
-        {
-            indexedValues.add(new IndexedValue(values[i], i));
-        }
-
-        List<IndexedValue> filteredValues = new ArrayList<>(count);
-
-        int i = 0;
-        for (IndexedValue indexedValue : indexedValues)
-        {
-            filteredValues.add(indexedValue);
-            i++;
-            if (i == count) break;
-        }
-
-        return filteredValues;
-    }
-
-    /**
-     * Holder of a value with the index (position of the element)
-     */
-    public static class IndexedValue
-    {
-        public final float value;
-        public final int index;
-
-        public IndexedValue(float value, int index)
-        {
-            this.value = value;
-            this.index = index;
-        }
-    }
-
-    /**
-     * Comparator for IndexedValue to achieve reverse ordering
-     */
-    private static class ReverseComparator implements Comparator<IndexedValue>
-    {
-        public int compare(IndexedValue a, IndexedValue b)
-        {
-            return Float.compare(b.value, a.value);
-        }
     }
 }

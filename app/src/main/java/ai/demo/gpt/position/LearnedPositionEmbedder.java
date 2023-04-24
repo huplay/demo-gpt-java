@@ -2,7 +2,8 @@ package ai.demo.gpt.position;
 
 import ai.demo.gpt.config.ParameterReader;
 import ai.demo.gpt.config.Settings;
-import ai.demo.util.Util;
+
+import static ai.demo.gpt.App.UTIL;
 
 public class LearnedPositionEmbedder extends AbstractPositionEmbedder
 {
@@ -16,6 +17,6 @@ public class LearnedPositionEmbedder extends AbstractPositionEmbedder
     @Override
     public float[] toInput(float[] input, int pos)
     {
-        return Util.addVectors(input, positionEmbeddings[pos]);
+        return UTIL.addVectors(input, positionEmbeddings[pos]);
     }
 }

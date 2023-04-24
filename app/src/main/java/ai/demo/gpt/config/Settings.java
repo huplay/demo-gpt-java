@@ -45,7 +45,8 @@ public class Settings
     private final String dataType;
     private final ByteOrder byteOrder;
     private final boolean isWeightsTransposed;
-    private final boolean isQueryKeyValueMerged;
+    private final boolean isMergedQKV;
+    private final boolean isMergedQKVSplitHeadFirst;
     private final int memorySaverDecoders;
 
     public Settings(Arguments arguments) throws Exception
@@ -53,7 +54,7 @@ public class Settings
         this.arguments = arguments;
 
         // Read all properties from the model.properties file
-        Map<String, String> properties = readProperties(getModelPath() + "/model.properties");
+        Map<String, String> properties = readProperties(getModelPath() + "model.properties");
 
         tokenizer = getProperty(properties, "tokenizer");
         tokenizerConfig = getProperty(properties, "tokenizer.config");
@@ -108,7 +109,8 @@ public class Settings
         this.dataType = properties.get("data.type");
         this.byteOrder = "LITTLE_ENDIAN".equalsIgnoreCase(properties.get("byte.order")) ? LITTLE_ENDIAN : BIG_ENDIAN;
         this.isWeightsTransposed = "true".equalsIgnoreCase(properties.get("weights.transposed"));
-        this.isQueryKeyValueMerged = "true".equalsIgnoreCase(properties.get("merged.qkv"));
+        this.isMergedQKV = "true".equalsIgnoreCase(properties.get("merged.qkv"));
+        this.isMergedQKVSplitHeadFirst = "HEAD_FIRST".equalsIgnoreCase(properties.get("merged.qkv.split"));
 
         String memorySaver = properties.get("memory.saver.decoders");
         this.memorySaverDecoders = memorySaver == null ? 0 : toInt(memorySaver);
@@ -118,6 +120,12 @@ public class Settings
         OUT.print("Number of parameters: " + Math.round(getParameterSize() / 1000000d) + " M");
         OUT.print(" (Hidden size: " + hiddenSize + ", decoders: " + decoderCount);
         OUT.println(", heads: " + headCount + ", head size: " + getHeadSize() +")");
+
+        long cost = getCalculationCost(50, 100);
+        OUT.println("Inference calculation cost: " + cost / 1_000_000_000 + " GigaFLOPS");
+
+        if (arguments.isCalculationOnly()) System.exit(0);
+
         OUT.println("Maximum length of generated text: " + arguments.getLengthLimit());
         OUT.println("Output is selected from the best " + arguments.getTopK() + " tokens (topK)");
     }
@@ -151,6 +159,55 @@ public class Settings
         }
 
         return properties;
+    }
+
+    public long getCalculationCost(int inputLength, int outputLength)
+    {
+        long normCost = 4 * hiddenSize; // TODO: Sqrt averagediff + epsion is missing, but not much
+
+        long layer1Cost = dotProductCost(hiddenSize) * feedForwardSize // weights
+                + feedForwardSize // biases
+                + 8 * feedForwardSize; // gelu
+
+        long layer2Cost = dotProductCost(feedForwardSize) * hiddenSize + hiddenSize;
+
+        long decoderCost = 2 * normCost // norm cost
+                + getAverageAttentionCost(inputLength + outputLength) // Attention mechanism
+                + layer1Cost + layer2Cost // Feed forward block
+                + hiddenSize * 2; // Residual connections
+
+        long determineOutputCost = dotProductCost(hiddenSize) * tokenCount + softmaxCost(40);
+
+        // TODO: Order and weighted random pick is missing
+
+        return hiddenSize * (inputLength + outputLength)
+                + decoderCost * decoderCount * inputLength + outputLength
+                + normCost * outputLength + 1 // Final normalization
+                + determineOutputCost * (outputLength + 1);
+    }
+
+    private long dotProductCost(long size)
+    {
+        return 2 * size - 1;
+    }
+
+    private long softmaxCost(int size)
+    {
+        return 4 * size;
+
+        // Exp calculation was added as multiplication
+    }
+
+    private long getAverageAttentionCost(int length)
+    {
+        long QKVCost = dotProductCost(hiddenSize) * 3 * hiddenSize;
+
+        long attentionCost = dotProductCost(hiddenSize)
+                + 1 // Attention dividend
+                + softmaxCost(hiddenSize)
+                + 2 * hiddenSize;
+
+        return QKVCost + attentionCost * length / 2;
     }
 
     public long getParameterSize()
@@ -286,6 +343,11 @@ public class Settings
         return isPreNormalization;
     }
 
+    public boolean isOutputNormalization()
+    {
+        return isPreNormalization;
+    }
+
     public int getHiddenSize()
     {
         return hiddenSize;
@@ -346,9 +408,14 @@ public class Settings
         return isWeightsTransposed;
     }
 
-    public boolean isQueryKeyValueMerged()
+    public boolean isMergedQKV()
     {
-        return isQueryKeyValueMerged;
+        return isMergedQKV;
+    }
+
+    public boolean isMergedQKVSplitHeadFirst()
+    {
+        return isMergedQKVSplitHeadFirst;
     }
 
     public int getMemorySaverDecoders()

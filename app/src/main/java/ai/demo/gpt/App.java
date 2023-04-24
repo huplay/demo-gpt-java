@@ -14,15 +14,10 @@ import java.util.List;
 
 public class App
 {
-    public static PrintStream OUT;
+    public static final PrintStream OUT = getPrintStream();
+    public static final Util UTIL = new Util();
 
     public static void main(String... args) throws Exception
-    {
-        OUT = new PrintStream(System.out, true, "utf-8");
-        new App().start(args);
-    }
-
-    private void start(String... args) throws Exception
     {
         logo();
 
@@ -44,7 +39,7 @@ public class App
         while (true)
         {
             // Read the input text
-            String inputText = input("Input text");
+            String inputText = input();
 
             List<Integer> inputTokens = new ArrayList<>();
 
@@ -76,24 +71,24 @@ public class App
         }
     }
 
-    private void logo()
+    private static void logo()
     {
         OUT.println("  _____________________________      ___");
         OUT.println(" /  _____/\\______   \\__    ___/   __|  /____   _____   ____");
         OUT.println("/   \\  ___ |     ___/ |    |     / __ |/ __ \\ /     \\ /  _ \\");
         OUT.println("\\    \\_\\  \\|    |     |    |    / /_/ \\  ___/|  Y Y  (  <_> )");
         OUT.println(" \\________/|____|     |____|    \\_____|\\_____>__|_|__/\\____/");
-        OUT.println("Util: " + Util.getUtilName() + "\n");
+        OUT.println("Util: " + UTIL.getUtilName() + "\n");
     }
 
-    private String input(String text) throws IOException
+    private static String input() throws IOException
     {
-        OUT.print("\n\n" + text + ": ");
+        OUT.print("\n\nInput text: ");
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         return reader.readLine();
     }
 
-    private void print(String response, List<Integer> outputTokens, Tokenizer tokenizer)
+    private static void print(String response, List<Integer> outputTokens, Tokenizer tokenizer)
     {
         // The response was printed token by token, but for multi-token characters only "�" will be displayed
 
@@ -111,7 +106,7 @@ public class App
         }
     }
 
-    private Arguments readArguments(String[] args) throws Exception
+    private static Arguments readArguments(String[] args) throws Exception
     {
         // Default values
         if (args == null || args.length == 0)
@@ -124,6 +119,7 @@ public class App
         String path = "models";
         int maxLength = 25;
         int topK = 40;
+        boolean isCalculationOnly = false;
 
         if (args.length > 1)
         {
@@ -137,17 +133,18 @@ public class App
                     String value = parts[1];
 
                     if (param.equals("path")) path = value;
-                    if (param.equals("max")) maxLength = readInt(value, maxLength);
+                    else if (param.equals("max")) maxLength = readInt(value, maxLength);
                     else if (param.equals("topk")) topK = readInt(value, topK);
+                    else if (param.equals("calc")) isCalculationOnly = true;
                 }
                 else OUT.println("\nWARNING: Unrecognisable argument: " + args[i] + "\n");
             }
         }
 
-        return new Arguments(name, path, maxLength, topK);
+        return new Arguments(name, path, maxLength, topK, isCalculationOnly);
     }
 
-    private int readInt(String value, int defaultValue)
+    private static int readInt(String value, int defaultValue)
     {
         try
         {
@@ -159,5 +156,17 @@ public class App
                     + "). Default value will be used.\n");
         }
         return defaultValue;
+    }
+
+    private static PrintStream getPrintStream()
+    {
+        try
+        {
+            return new PrintStream(System.out, true, "utf-8");
+        }
+        catch (Exception e)
+        {
+            return System.out;
+        }
     }
 }

@@ -5,21 +5,18 @@ import jdk.incubator.vector.VectorMask;
 import jdk.incubator.vector.VectorOperators;
 import jdk.incubator.vector.VectorSpecies;
 
-import static java.lang.Math.sqrt;
-
-public class Util
+public class Util extends AbstractUtil
 {
     static final VectorSpecies<Float> SPECIES = FloatVector.SPECIES_MAX;
 
-    public static String getUtilName()
+    @Override
+    public String getUtilName()
     {
         return "Java Vector API (" + SPECIES.vectorBitSize() + " bit)";
     }
 
-    /**
-     * Vector to vector addition
-     */
-    public static float[] addVectors(float[] vector1, float[] vector2)
+    @Override
+    public float[] addVectors(float[] vector1, float[] vector2)
     {
         float[] result = new float[vector1.length];
 
@@ -34,10 +31,8 @@ public class Util
         return result;
     }
 
-    /**
-     * Dot product calculation (multiplying vector by vector)
-     */
-    public static float dotProduct(float[] a, float[] b)
+    @Override
+    public float dotProduct(float[] a, float[] b)
     {
         var upperBound = SPECIES.loopBound(a.length);
         var sum = FloatVector.zero(SPECIES);
@@ -59,10 +54,8 @@ public class Util
         return c;
     }
 
-    /**
-     * Multiply vector by a scalar
-     */
-    public static float[] multiplyVectorByScalar(float[] vector, float scalar)
+    @Override
+    public float[] multiplyVectorByScalar(float[] vector, float scalar)
     {
         float[] result = new float[vector.length];
 
@@ -76,10 +69,8 @@ public class Util
         return result;
     }
 
-    /**
-     * Multiply vector by matrix
-     */
-    public static float[] multiplyVectorByMatrix(float[] vector, float[][] matrix)
+    @Override
+    public float[] multiplyVectorByTransposedMatrix(float[] vector, float[][] matrix)
     {
         float[] ret = new float[matrix.length];
 
@@ -91,32 +82,8 @@ public class Util
         return ret;
     }
 
-    /**
-     * Multiply vector by transposed matrix
-     */
-    public static float[] multiplyVectorByTransposedMatrix(float[] vector, float[][] matrix)
-    {
-        float[] ret = new float[matrix.length];
-
-        for (int row = 0; row < matrix.length; row++)
-        {
-            float sum = 0;
-
-            for (int i = 0; i < vector.length; i++)
-            {
-                sum = sum + vector[i] * matrix[row][i];
-            }
-
-            ret[row] = sum;
-        }
-
-        return ret;
-    }
-
-    /**
-     * Split a vector to a matrix
-     */
-    public static float[][] splitVector(float[] vector, int count)
+    @Override
+    public float[][] splitVector(float[] vector, int count)
     {
         int size = vector.length / count;
         float[][] ret = new float[count][size];
@@ -138,10 +105,8 @@ public class Util
         return ret;
     }
 
-    /**
-     * Merge the rows of a matrix to a single vector
-     */
-    public static float[] flattenMatrix(float[][] matrix)
+    @Override
+    public float[] flattenMatrix(float[][] matrix)
     {
         float[] ret = new float[matrix.length * matrix[0].length];
 
@@ -159,25 +124,8 @@ public class Util
         return ret;
     }
 
-    /**
-     * Standard normalization - (value - avg) * sqrt( (value - avg)^2 + epsilon)
-     */
-    public static float[] normalize(float[] vector, float epsilon)
-    {
-        float average = average(vector);
-        float averageDiff = averageDiff(vector, average, epsilon);
-
-        float[] norm = new float[vector.length];
-
-        for (int i = 0; i < vector.length; i++)
-        {
-            norm[i] = (vector[i] - average) / averageDiff;
-        }
-
-        return norm;
-    }
-
-    private static float average(float[] vector)
+    @Override
+    public float average(float[] vector)
     {
         double sum = 0;
 
@@ -187,20 +135,5 @@ public class Util
         }
 
         return (float) sum / vector.length;
-    }
-
-    private static float averageDiff(float[] values, float average, float epsilon)
-    {
-        float[] squareDiff = new float[values.length];
-
-        for (int i = 0; i < values.length; i++)
-        {
-            float diff = values[i] - average;
-            squareDiff[i] = diff * diff;
-        }
-
-        float averageSquareDiff = average(squareDiff);
-
-        return (float) sqrt(averageSquareDiff + epsilon);
     }
 }

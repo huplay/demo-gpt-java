@@ -14,6 +14,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>ai.demo.gpt</groupId>
+            <artifactId>demo-gpt-common-util</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
             <groupId>org.nd4j</groupId>
             <artifactId>nd4j-native</artifactId>
             <version>1.0.0-M2.1</version>
