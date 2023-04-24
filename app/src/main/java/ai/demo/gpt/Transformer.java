@@ -62,7 +62,7 @@ public class Transformer
      * Transformer token processing logic
      * This method implements the logic how the input tokens and the new and new generated tokens are passed to the transformer
      */
-    public List<Integer> executeRequest(List<Integer> inputTokens, int startPos)
+    public List<Integer> process(List<Integer> inputTokens, int startPos)
     {
         List<Integer> result = new ArrayList<>();
         int intputSize = inputTokens.size();
@@ -95,7 +95,7 @@ public class Transformer
             // Add the last input token or the previously generated new token as input
             float[] hiddenState = processToken(pos + startPos, token, true);
 
-            token = getOutputToken(hiddenState);
+            token = determineOutputToken(hiddenState);
             result.add(token);
 
             // Exit if the END_OF_TEXT token was chosen or the maximum length is reached
@@ -129,7 +129,7 @@ public class Transformer
         return hiddenState;
     }
 
-    private int getOutputToken(float[] hiddenState)
+    private int determineOutputToken(float[] hiddenState)
     {
         // Final normalization
         if (settings.isOutputNormalization())
@@ -137,15 +137,9 @@ public class Transformer
             hiddenState = norm(hiddenState, outputNormWeights, outputNormBiases, settings.getEpsilon());
         }
 
-        // Chose the next token
-        return determineOutput(hiddenState);
-    }
-
-    private int determineOutput(float[] output)
-    {
         // Multiply (dot product) the output with all token embeddings.
         // It will give a higher value if the output is more similar to the token embedding
-        float[] logits = UTIL.multiplyVectorByTransposedMatrix(output, tokenEmbeddings);
+        float[] logits = UTIL.multiplyVectorByTransposedMatrix(hiddenState, tokenEmbeddings);
 
         // Sort (higher to lower) the result of the dot products, retaining the order (index) of the related token
         List<IndexedValue> orderedLogits = UTIL.reverseAndFilter(logits, settings.getTopK());

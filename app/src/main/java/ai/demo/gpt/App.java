@@ -60,7 +60,7 @@ public class App
             }
 
             // Use the Transformer
-            List<Integer> outputTokens = transformer.executeRequest(inputTokens, pos);
+            List<Integer> outputTokens = transformer.process(inputTokens, pos);
 
             // Convert the output to text and print it
             String response = tokenizer.decode(outputTokens);
