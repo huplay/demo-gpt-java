@@ -185,7 +185,7 @@ Proposal for a more efficient but still good performing sparse solution, where e
 - https://arxiv.org/abs/2005.14165
 - https://arxiv.org/pdf/2005.14165v4.pdf
 - https://paperswithcode.com/paper/language-models-are-few-shot-learners/review/
-- Source code (not complete): https://github.com/openai/ai.demo.util-3
+- Source code (not complete): https://github.com/openai/gpt-3
 
 Almost exactly the same architecture as GPT-2, but in different sizes, and some decoders use sparse attention. (The original attention called `global`, the new solution is `local`.)
 It is a very simple change: only the most recent tokens are used by the attention mechanism (last 256), the older tokens are dropped from the calculation.
