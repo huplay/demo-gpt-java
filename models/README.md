@@ -104,17 +104,34 @@ BLOOM (BigScience Large Open-science Open-access Multilingual Language Model) wa
 
 LLaMA (Large Language Model Meta AI) is a large language model announced by Meta (Facebook) in 23 Feb 2023. The trained parameters were shared only to academic researchers, but on 2 March it was leaked to the public.
 
+Llama 2 was published in 18 July 2023 in three sizes. Llama 3 was published in 18 Apr 2024 in two sizes. (The training of a bigger version is in progress.)
+
+The weights and the code is completely public for Llama 2 and 3, free to use even in commercial products. (Companies over 700 million monthly users has to request the licence.) 
+
 These models are not ported yet as I don't have all the necessary details, but there's a chance the smaller models could be used somehow.
 
-Vocabulary size is 32,000.
+| Name      | Hidden size | Dec. no. | Head no. | Max. length | Size of params | Vocabulary size |
+|-----------|------------:|---------:|---------:|------------:|---------------:|-----------------|
+| LLaMA-7B  |        4096 |       32 |       32 |        2048 |        6,583 M |          32,000 |
+| LLaMA-13B |        5120 |       40 |       40 |        2048 |       12,759 M |          32,000 |
+| LLaMA-33B |        6656 |       60 |       52 |        2048 |       32,129 M |          32,000 |
+| LLaMA-65B |        8192 |       80 |       64 |        2048 |       64,711 M |          32,000 |
 
-| Name      | Hidden size | Dec. no. | Head no. | Max. length | Size of params |
-|-----------|------------:|---------:|---------:|------------:|---------------:|
-| LLaMA-7B  |        4096 |       32 |       32 |        2048 |        6,583 M | 
-| LLaMA-13B |        5120 |       40 |       40 |        2048 |       12,759 M |
-| LLaMA-33B |        6656 |       60 |       52 |        2048 |       32,129 M |
-| LLaMA-65B |        8192 |       80 |       64 |        2048 |       64,711 M |
+Llama 2 uses an additional gate projection network in the MLP block, and the 13B and 70B models has Grouped Query attention solution (GQA), so the calculation of the parameter size is a little bit different.
 
+| Name        | Hidden size | Dec. no. | Head no. | Max. length | Size of params | Vocabulary size |
+|-------------|------------:|---------:|---------:|------------:|---------------:|----------------:|
+| Llama 2-7B  |        4096 |       32 |       32 |        4096 |              M |          32,000 |
+| Llama 2-13B |        5120 |       40 |       40 |        4096 |       13,016 M |          32,000 |
+| Llama 2-70B |        8192 |       80 |       64 |        4096 |              M |          32,000 |
+
+Both Llama 3 model uses gate projection and GQA, so architecturally it's the same as Llama 2. But it has a different tokenizer.
+
+| Name         | Hidden size | Dec. no. | Head no. | Max. length | Size of params | Vocabulary size |
+|--------------|------------:|---------:|---------:|------------:|---------------:|----------------:|
+| Llama 3-8B   |        4096 |       32 |       32 |        8192 |              M |         128,000 |
+| Llama 3-70B  |        5120 |       40 |       40 |        8192 |              M |         128,000 |
+| Llama 3-400B |        ???? |       ?? |       ?? |        ???? |              M |         128,000 |
 
 ### Cerebras ###
 
