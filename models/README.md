@@ -110,28 +110,31 @@ The weights and the code is completely public for Llama 2 and 3, free to use eve
 
 These models are not ported yet as I don't have all the necessary details, but there's a chance the smaller models could be used somehow.
 
-| Name      | Hidden size | Dec. no. | Head no. | Max. length | Size of params | Vocabulary size |
-|-----------|------------:|---------:|---------:|------------:|---------------:|-----------------|
-| LLaMA-7B  |        4096 |       32 |       32 |        2048 |        6,583 M |          32,000 |
-| LLaMA-13B |        5120 |       40 |       40 |        2048 |       12,759 M |          32,000 |
-| LLaMA-33B |        6656 |       60 |       52 |        2048 |       32,129 M |          32,000 |
-| LLaMA-65B |        8192 |       80 |       64 |        2048 |       64,711 M |          32,000 |
+Llama 1 and 2 has a vocabulary of 32,000 tokens. 
+
+| Name      | Hidden size | Dec. no. | Head no. | Max. length | Size of params |
+|-----------|------------:|---------:|---------:|------------:|---------------:|
+| LLaMA-7B  |        4096 |       32 |       32 |        2048 |        6,583 M |
+| LLaMA-13B |        5120 |       40 |       40 |        2048 |       12,759 M |
+| LLaMA-33B |        6656 |       60 |       52 |        2048 |       32,129 M |
+| LLaMA-65B |        8192 |       80 |       64 |        2048 |       64,711 M |
 
 Llama 2 uses an additional gate projection network in the MLP block, and the 13B and 70B models has Grouped Query attention solution (GQA), so the calculation of the parameter size is a little bit different.
 
-| Name        | Hidden size | Dec. no. | Head no. | Max. length | Size of params | Vocabulary size |
-|-------------|------------:|---------:|---------:|------------:|---------------:|----------------:|
-| Llama 2-7B  |        4096 |       32 |       32 |        4096 |              M |          32,000 |
-| Llama 2-13B |        5120 |       40 |       40 |        4096 |       13,016 M |          32,000 |
-| Llama 2-70B |        8192 |       80 |       64 |        4096 |              M |          32,000 |
+| Name        | Hidden size | Dec. no. | Head no. | Max. length | Size of params |
+|-------------|------------:|---------:|---------:|------------:|---------------:|
+| Llama 2-7B  |        4096 |       32 |       32 |        4096 |              M |
+| Llama 2-13B |        5120 |       40 |       40 |        4096 |       13,016 M |
+| Llama 2-70B |        8192 |       80 |       64 |        4096 |              M |
 
-Both Llama 3 model uses gate projection and GQA, so architecturally it's the same as Llama 2. But it has a different tokenizer.
+Llama 3 architecturally the same as Llama 2, all models use GQA (even the smallest). It has a different tokenizer with 128,000 vocabulary size.
+There's a base model and an instruct fine trained variant as well in each sizes.
 
-| Name         | Hidden size | Dec. no. | Head no. | Max. length | Size of params | Vocabulary size |
-|--------------|------------:|---------:|---------:|------------:|---------------:|----------------:|
-| Llama 3-8B   |        4096 |       32 |       32 |        8192 |              M |         128,000 |
-| Llama 3-70B  |        5120 |       40 |       40 |        8192 |              M |         128,000 |
-| Llama 3-400B |        ???? |       ?? |       ?? |        ???? |              M |         128,000 |
+| Name         | Hidden size | Dec. no. | Head no. | Max. length | Size of params |
+|--------------|------------:|---------:|---------:|------------:|---------------:|
+| Llama 3-8B   |        4096 |       32 |       32 |        8192 |              M |
+| Llama 3-70B  |        8192 |       80 |       64 |        8192 |              M |
+| Llama 3-400B |        ???? |       ?? |       ?? |        ???? |              M |
 
 ### Cerebras ###
 
