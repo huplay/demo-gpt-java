@@ -1,3 +1,6 @@
+
+> This repo is outdated, use the ```demo-LLM-zoo-java``` repo instead. https://github.com/huplay/demo-LLM-zoo-java
+
 # GPT demo app
 
 This is a demo application which implements the GPT-2/3 and similar artificial intelligence language models in Java, for learning purposes.
